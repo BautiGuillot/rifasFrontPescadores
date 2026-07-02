@@ -293,7 +293,6 @@
       <form class="form-panel" [formGroup]="marcaForm" (ngSubmit)="guardarMarca()">
         <h2>Personalización</h2>
         <label>Color principal <input type="color" formControlName="colorPrincipal" /></label>
-        <label>Logo URL <input type="url" formControlName="logoUrl" placeholder="https://..." /></label>
         <label class="file-action">
           {{ subiendoLogo() ? 'Subiendo logo...' : 'Subir logo' }}
           <input type="file" accept="image/*" [disabled]="subiendoLogo()" (change)="subirLogo($event)" />

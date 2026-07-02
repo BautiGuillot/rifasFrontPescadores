@@ -3,7 +3,7 @@
     <div>
       <div class="public-brand">
         @if (rifa.clienteLogoUrl) {
-          <img [src]="rifa.clienteLogoUrl" [alt]="rifa.clienteNombre || 'Logo'" />
+          <img [src]="mediaUrl(rifa.clienteLogoUrl)" [alt]="rifa.clienteNombre || 'Logo'" />
         }
         <span>{{ rifa.clienteNombre || 'Rifa activa' }}</span>
       </div>
@@ -23,7 +23,7 @@
           @for (premio of rifa.premios; track premio.posicion) {
             <article>
               @if (premio.imagenUrl) {
-                <img [src]="premio.imagenUrl" alt="" />
+                <img [src]="mediaUrl(premio.imagenUrl)" alt="" />
               }
               <div>
                 <span>Premio {{ premio.posicion }}</span>

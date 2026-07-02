@@ -369,6 +369,10 @@ export class AdminComponent {
     return `https://wa.me/${numero.replace(/\D/g, '')}`;
   }
 
+  mediaUrl(url?: string | null): string {
+    return this.api.mediaUrl(url);
+  }
+
   private cargarTodo(): void {
     this.api.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));
     this.api.listarAdminRifas().subscribe((rifas) => this.rifas.set(rifas));

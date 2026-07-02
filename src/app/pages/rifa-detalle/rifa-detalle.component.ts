@@ -118,6 +118,10 @@ export class RifaDetalleComponent implements OnDestroy {
     return rifa.clienteColorPrincipal || '#082d50';
   }
 
+  mediaUrl(url?: string | null): string {
+    return this.api.mediaUrl(url);
+  }
+
   cargarComprobante(event: Event): void {
     const compra = this.compra();
     const input = event.target as HTMLInputElement;

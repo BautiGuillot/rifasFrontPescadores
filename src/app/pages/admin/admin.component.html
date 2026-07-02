@@ -56,7 +56,7 @@
                 <td>
                   <span class="brand-preview">
                     @if (cliente.logoUrl) {
-                      <img [src]="cliente.logoUrl" alt="" />
+                      <img [src]="mediaUrl(cliente.logoUrl)" alt="" />
                     }
                     <i [style.background]="cliente.colorPrincipal"></i>
                     {{ cliente.colorPrincipal }}
@@ -149,14 +149,13 @@
               <input type="number" formControlName="posicion" aria-label="Posición premio" />
               <div class="prize-fields">
                 <input type="text" formControlName="descripcion" placeholder="Descripción del premio" />
-                <input type="url" formControlName="imagenUrl" placeholder="URL imagen del premio" />
                 <label class="file-action">
                   {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
                   <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
                 </label>
               </div>
               @if (premio.value.imagenUrl) {
-                <img class="prize-thumb" [src]="premio.value.imagenUrl" alt="" />
+                <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
               }
             </div>
           }
@@ -306,7 +305,7 @@
         <h2>Vista previa</h2>
         <div class="brand-card-preview" [style.--preview-color]="marcaForm.controls.colorPrincipal.value">
           @if (marcaForm.controls.logoUrl.value) {
-            <img [src]="marcaForm.controls.logoUrl.value" alt="" />
+            <img [src]="mediaUrl(marcaForm.controls.logoUrl.value)" alt="" />
           }
           <div>
             <span>{{ miMarca()?.nombre || 'Tu negocio' }}</span>

@@ -18,6 +18,19 @@ export class RifasApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
 
+  mediaUrl(url?: string | null): string {
+    if (!url) {
+      return '';
+    }
+    if (/^(https?:|data:|blob:)/i.test(url)) {
+      return url;
+    }
+    if (url.startsWith('/api/')) {
+      return `${this.apiOrigin()}${url}`;
+    }
+    return url;
+  }
+
   listarPublicadas() {
     return this.http.get<RifaResumen[]>(`${this.baseUrl}/rifas`);
   }
@@ -142,5 +155,9 @@ export class RifasApiService {
     const formData = new FormData();
     formData.append('archivo', archivo);
     return this.http.post<MediaResponse>(`${this.baseUrl}/admin/media/premios`, formData);
+  }
+
+  private apiOrigin(): string {
+    return new URL(this.baseUrl, window.location.origin).origin;
   }
 }

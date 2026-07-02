@@ -24,6 +24,9 @@
         <div class="actions">
           <a class="small-button" [href]="linkPublicoRifa(detalle)" target="_blank" rel="noopener">Abrir link</a>
           <button type="button" (click)="copiarLinkRifa(detalle)">Copiar</button>
+          @if (detalle.estado === 'PUBLICADA') {
+            <button type="button" (click)="finalizarConGanadores(detalle)">Finalizar</button>
+          }
         </div>
       </div>
 
@@ -57,6 +60,38 @@
         }
       </div>
     </section>
+
+    @if (detalle.estado === 'FINALIZADA' && detalle.ganadores.length) {
+      <section class="table-panel raffle-detail-panel">
+        <h2>Ganadores</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Puesto</th>
+              <th>Número</th>
+              <th>Premio</th>
+              <th>Comprador</th>
+              <th>Teléfono</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ganador of detalle.ganadores; track ganador.posicion) {
+              <tr>
+                <td>{{ ganador.posicion }}</td>
+                <td><strong>{{ ganador.numero }}</strong></td>
+                <td>{{ ganador.premio }}</td>
+                <td>{{ ganador.nombreComprador }}</td>
+                <td>
+                  <a class="small-button" [href]="whatsappUrl(ganador.telefonoComprador)" target="_blank" rel="noopener">
+                    {{ ganador.telefonoComprador }}
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
 
     <section class="table-panel raffle-detail-panel">
       <h2>Compras de esta rifa</h2>

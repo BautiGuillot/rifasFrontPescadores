@@ -9,6 +9,9 @@
       </div>
       <h1>{{ rifa.titulo }}</h1>
       <p>{{ rifa.descripcion }}</p>
+      <p class="state-banner" [class.closed]="rifa.estado !== 'PUBLICADA'">
+        Estado: {{ rifa.estado }}
+      </p>
     </div>
     <div class="price-box">
       <span>Valor por fila</span>
@@ -34,6 +37,24 @@
         </div>
       }
 
+      @if (rifa.estado === 'FINALIZADA' && rifa.ganadores.length) {
+        <div class="public-winners">
+          <h2>Ganadores</h2>
+          @for (ganador of rifa.ganadores; track ganador.posicion) {
+            <article>
+              <span>{{ ganador.posicion }}° premio</span>
+              <strong>{{ ganador.numero }}</strong>
+              <p>{{ ganador.premio }}</p>
+              <small>{{ ganador.nombreComprador }}</small>
+            </article>
+          }
+        </div>
+      }
+
+      @if (rifa.estado === 'CANCELADA') {
+        <p class="alert">Esta rifa fue cancelada.</p>
+      }
+
       <div class="legend">
         <span><i class="dot available"></i> Disponible</span>
         <span><i class="dot pending"></i> Pendiente</span>
@@ -54,7 +75,7 @@
             [class.pending]="numero.estado === 'PENDIENTE'"
             [class.sold]="numero.estado === 'VENDIDO'"
             [class.selected]="seleccion().includes(numero.valor)"
-            [disabled]="numero.estado !== 'DISPONIBLE' || !!compra()"
+            [disabled]="rifa.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || !!compra()"
             (click)="toggle(numero)"
           >
             <strong>{{ numero.etiqueta }}</strong>
@@ -67,7 +88,17 @@
     </div>
 
     <aside class="form-panel">
-      @if (compra(); as compra) {
+      @if (rifa.estado !== 'PUBLICADA') {
+        <div class="success-panel">
+          @if (rifa.estado === 'FINALIZADA') {
+            <h2>Rifa finalizada</h2>
+            <p>La rifa ya terminó. Los ganadores se muestran en el detalle.</p>
+          } @else {
+            <h2>Rifa no disponible</h2>
+            <p>La rifa no admite nuevas compras.</p>
+          }
+        </div>
+      } @else if (compra(); as compra) {
         <div class="success-panel">
           <h2>Gracias por realizar tu compra</h2>
           @if (compraConComprobante()) {

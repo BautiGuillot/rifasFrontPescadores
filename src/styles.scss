@@ -261,6 +261,23 @@ dd {
   font-size: 1.5rem;
 }
 
+.state-banner {
+  display: inline-flex;
+  margin-top: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--client-color, var(--brand-blue-900)) 28%, #cfd9e2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: #ffffff;
+  color: var(--client-color, var(--brand-blue-900)) !important;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.state-banner.closed {
+  border-color: #cfd9e2;
+  color: #475569 !important;
+}
+
 .numbers-panel {
   padding: 16px;
 }
@@ -682,6 +699,44 @@ td span {
 .public-prizes strong {
   display: block;
   margin-top: 2px;
+}
+
+.public-winners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.public-winners h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.public-winners article {
+  border: 1px solid #d7e1e8;
+  border-radius: 6px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.public-winners span,
+.public-winners small {
+  display: block;
+  color: #64727d;
+  font-weight: 900;
+}
+
+.public-winners strong {
+  display: block;
+  margin: 4px 0;
+  color: var(--brand-blue-900);
+  font-size: 1.5rem;
+}
+
+.public-winners p {
+  margin: 0 0 6px;
+  font-weight: 900;
 }
 
 .actions {

@@ -73,7 +73,7 @@ export class RifaDetalleComponent implements OnDestroy {
   }
 
   toggle(numero: NumeroRifa): void {
-    if (numero.estado !== 'DISPONIBLE' || this.compra()) {
+    if (this.rifa()?.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || this.compra()) {
       return;
     }
     const actual = this.seleccion();

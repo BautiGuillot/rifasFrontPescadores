@@ -232,10 +232,25 @@ export class AdminComponent {
   }
 
   finalizar(id: number): void {
-    if (!confirm('¿Finalizar esta rifa? Ya no se podrán realizar compras.')) {
+    const rifa = this.rifas().find((item) => item.id === id);
+    if (!rifa) {
+      this.error.set('No se pudo encontrar la rifa.');
       return;
     }
-    this.api.finalizarRifa(id).subscribe(() => this.cargarTodo());
+    const ganadores = this.pedirGanadores(rifa);
+    if (!ganadores) {
+      return;
+    }
+    if (!confirm('¿Finalizar esta rifa y publicar los ganadores? Ya no se podrán realizar compras.')) {
+      return;
+    }
+    this.api.finalizarRifaConGanadores(id, ganadores).subscribe({
+      next: () => {
+        this.mensaje.set('Rifa finalizada con ganadores cargados.');
+        this.cargarTodo();
+      },
+      error: (error) => this.error.set(error.error?.message || 'No se pudo finalizar la rifa.'),
+    });
   }
 
   cancelar(id: number): void {
@@ -371,6 +386,23 @@ export class AdminComponent {
 
   mediaUrl(url?: string | null): string {
     return this.api.mediaUrl(url);
+  }
+
+  private pedirGanadores(rifa: RifaResumen): { posicion: number; numero: number }[] | null {
+    const ganadores: { posicion: number; numero: number }[] = [];
+    for (let posicion = 1; posicion <= rifa.cantidadGanadores; posicion++) {
+      const valor = window.prompt(`Número ganador para el puesto ${posicion}`);
+      if (valor === null) {
+        return null;
+      }
+      const numero = Number(valor.trim());
+      if (!Number.isInteger(numero) || numero < 0) {
+        this.error.set('El número ganador debe ser un número válido.');
+        return null;
+      }
+      ganadores.push({ posicion, numero });
+    }
+    return ganadores;
   }
 
   private cargarTodo(): void {

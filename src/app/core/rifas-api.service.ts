@@ -93,6 +93,10 @@ export class RifasApiService {
     return this.http.patch<RifaDetalle>(`${this.baseUrl}/admin/rifas/${id}/finalizar`, {});
   }
 
+  finalizarRifaConGanadores(id: number, ganadores: { posicion: number; numero: number }[]) {
+    return this.http.post<RifaDetalle>(`${this.baseUrl}/admin/rifas/${id}/finalizar-con-ganadores`, { ganadores });
+  }
+
   cancelarRifa(id: number) {
     return this.http.patch<RifaDetalle>(`${this.baseUrl}/admin/rifas/${id}/cancelar`, {});
   }

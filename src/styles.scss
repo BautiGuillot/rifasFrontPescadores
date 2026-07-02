@@ -799,6 +799,16 @@ td span {
   font-size: 1.4rem;
 }
 
+.compact-brand-preview {
+  align-items: center;
+  padding: 10px;
+}
+
+.compact-brand-preview img {
+  width: 48px;
+  height: 38px;
+}
+
 .raffle-detail-panel {
   display: grid;
   gap: 16px;

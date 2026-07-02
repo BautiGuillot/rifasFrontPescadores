@@ -137,6 +137,12 @@ export class RifasApiService {
     return this.http.put<Cliente>(`${this.baseUrl}/super-admin/clientes/${id}`, request);
   }
 
+  subirLogoCliente(id: number, archivo: File) {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return this.http.post<Cliente>(`${this.baseUrl}/super-admin/clientes/${id}/logo`, formData);
+  }
+
   actualizarEstadoCliente(id: number, estado: 'ACTIVO' | 'INACTIVO') {
     return this.http.patch<Cliente>(`${this.baseUrl}/super-admin/clientes/${id}/estado`, { estado });
   }

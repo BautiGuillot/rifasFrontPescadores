@@ -27,6 +27,8 @@ export class AdminComponent {
   readonly mensaje = signal('');
   readonly error = signal('');
   readonly subiendoLogo = signal(false);
+  readonly logoClienteArchivo = signal<File | null>(null);
+  readonly subiendoLogoCliente = signal(false);
   readonly subiendoPremio = signal<number | null>(null);
   readonly editandoRifaId = signal<number | null>(null);
   readonly editandoClienteId = signal<number | null>(null);
@@ -128,6 +130,11 @@ export class AdminComponent {
         this.subiendoLogo.set(false);
       },
     });
+  }
+
+  seleccionarLogoCliente(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.logoClienteArchivo.set(input.files?.[0] || null);
   }
 
   subirImagenPremio(index: number, event: Event): void {
@@ -344,11 +351,7 @@ export class AdminComponent {
       ? this.api.actualizarCliente(editandoId, raw)
       : this.api.crearCliente(raw);
     request.subscribe({
-      next: () => {
-        this.mensaje.set(editandoId ? 'Cliente actualizado.' : 'Cliente creado.');
-        this.limpiarFormularioCliente();
-        this.cargarClientes();
-      },
+      next: (cliente) => this.guardarLogoClienteSiCorresponde(cliente, editandoId ? 'Cliente actualizado.' : 'Cliente creado.'),
       error: (error) => this.error.set(error.error?.message || 'No se pudo guardar el cliente.'),
     });
   }
@@ -437,7 +440,33 @@ export class AdminComponent {
 
   private limpiarFormularioCliente(): void {
     this.editandoClienteId.set(null);
+    this.logoClienteArchivo.set(null);
     this.clienteForm.reset({ nombre: '', slug: '', colorPrincipal: '#082d50', logoUrl: '', username: '', password: '' });
+  }
+
+  private guardarLogoClienteSiCorresponde(cliente: Cliente, mensaje: string): void {
+    const archivo = this.logoClienteArchivo();
+    if (!archivo) {
+      this.mensaje.set(mensaje);
+      this.limpiarFormularioCliente();
+      this.cargarClientes();
+      return;
+    }
+    this.subiendoLogoCliente.set(true);
+    this.api.subirLogoCliente(cliente.id, archivo).subscribe({
+      next: () => {
+        this.subiendoLogoCliente.set(false);
+        this.mensaje.set(`${mensaje} Logo actualizado.`);
+        this.limpiarFormularioCliente();
+        this.cargarClientes();
+      },
+      error: (error) => {
+        this.subiendoLogoCliente.set(false);
+        this.error.set(error.error?.message || 'El cliente se guardó, pero no se pudo subir el logo.');
+        this.limpiarFormularioCliente();
+        this.cargarClientes();
+      },
+    });
   }
 
   private limpiarFormularioRifa(): void {

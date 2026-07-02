@@ -26,8 +26,19 @@
         <label>Slug <input type="text" formControlName="slug" placeholder="tienda-a" /></label>
         <div class="form-grid">
           <label>Color <input type="color" formControlName="colorPrincipal" /></label>
-          <label>Logo URL <input type="url" formControlName="logoUrl" placeholder="https://..." /></label>
+          <label class="file-action">
+            {{ subiendoLogoCliente() ? 'Subiendo logo...' : 'Subir logo' }}
+            <input type="file" accept="image/*" [disabled]="subiendoLogoCliente()" (change)="seleccionarLogoCliente($event)" />
+          </label>
         </div>
+        @if (logoClienteArchivo()) {
+          <p class="muted">Logo seleccionado: {{ logoClienteArchivo()?.name }}</p>
+        } @else if (clienteForm.controls.logoUrl.value) {
+          <div class="brand-card-preview compact-brand-preview" [style.--preview-color]="clienteForm.controls.colorPrincipal.value">
+            <img [src]="mediaUrl(clienteForm.controls.logoUrl.value)" alt="" />
+            <span>Logo actual</span>
+          </div>
+        }
         <label>Usuario <input type="text" formControlName="username" /></label>
         <label>
           {{ editandoClienteId() ? 'Nueva contraseña' : 'Contraseña' }}

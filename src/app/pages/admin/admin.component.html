@@ -211,6 +211,9 @@
                   @if (rifa.estado !== 'FINALIZADA' && rifa.estado !== 'CANCELADA') {
                     <button type="button" class="danger" (click)="cancelar(rifa.id)">Cancelar</button>
                   }
+                  @if (rifa.estado === 'CANCELADA') {
+                    <button type="button" class="danger" (click)="eliminar(rifa)">Eliminar</button>
+                  }
                 </td>
               </tr>
             }

@@ -27,6 +27,9 @@
           @if (detalle.estado === 'PUBLICADA') {
             <button type="button" (click)="finalizarConGanadores(detalle)">Finalizar</button>
           }
+          @if (detalle.estado === 'CANCELADA') {
+            <button type="button" class="danger" (click)="eliminar(detalle)">Eliminar</button>
+          }
         </div>
       </div>
 

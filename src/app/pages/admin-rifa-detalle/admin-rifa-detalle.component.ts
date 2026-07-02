@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Compra, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
 
@@ -12,6 +12,7 @@ import { RifasApiService } from '../../core/rifas-api.service';
 export class AdminRifaDetalleComponent {
   private readonly api = inject(RifasApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly rifa = signal<RifaDetalle | null>(null);
   readonly compras = signal<Compra[]>([]);
@@ -66,6 +67,20 @@ export class AdminRifaDetalleComponent {
         this.cargarDetalle();
       },
       error: (error) => this.error.set(error.error?.message || 'No se pudo finalizar la rifa.'),
+    });
+  }
+
+  eliminar(rifa: RifaDetalle): void {
+    if (rifa.estado !== 'CANCELADA') {
+      this.error.set('Solo se pueden eliminar rifas canceladas.');
+      return;
+    }
+    if (!confirm(`¿Eliminar definitivamente la rifa "${rifa.titulo}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    this.api.eliminarRifa(rifa.id).subscribe({
+      next: () => this.router.navigateByUrl('/admin'),
+      error: (error) => this.error.set(error.error?.message || 'No se pudo eliminar la rifa.'),
     });
   }
 

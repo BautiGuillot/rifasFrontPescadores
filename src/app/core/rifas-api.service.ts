@@ -101,6 +101,10 @@ export class RifasApiService {
     return this.http.patch<RifaDetalle>(`${this.baseUrl}/admin/rifas/${id}/cancelar`, {});
   }
 
+  eliminarRifa(id: number) {
+    return this.http.delete<void>(`${this.baseUrl}/admin/rifas/${id}`);
+  }
+
   cargarGanadores(rifaId: number, ganadores: { posicion: number; numero: number }[]) {
     return this.http.post<RifaDetalle>(`${this.baseUrl}/admin/rifas/${rifaId}/ganadores`, { ganadores });
   }

@@ -269,6 +269,23 @@ export class AdminComponent {
     this.api.cancelarRifa(id).subscribe(() => this.cargarTodo());
   }
 
+  eliminar(rifa: RifaResumen): void {
+    if (rifa.estado !== 'CANCELADA') {
+      this.error.set('Solo se pueden eliminar rifas canceladas.');
+      return;
+    }
+    if (!confirm(`¿Eliminar definitivamente la rifa "${rifa.titulo}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    this.api.eliminarRifa(rifa.id).subscribe({
+      next: () => {
+        this.mensaje.set('Rifa eliminada.');
+        this.cargarTodo();
+      },
+      error: (error) => this.error.set(error.error?.message || 'No se pudo eliminar la rifa.'),
+    });
+  }
+
   cargarCompras(estado: EstadoCompra | '' = this.compraFiltro()): void {
     this.compraFiltro.set(estado);
     this.api.listarCompras(estado || undefined).subscribe({

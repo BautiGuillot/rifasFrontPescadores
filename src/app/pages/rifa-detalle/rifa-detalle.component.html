@@ -1,0 +1,184 @@
+@if (rifa(); as rifa) {
+  <section class="page-header detail-header branded-rifa-header" [style.--client-color]="colorPrincipal(rifa)">
+    <div>
+      <div class="public-brand">
+        @if (rifa.clienteLogoUrl) {
+          <img [src]="rifa.clienteLogoUrl" [alt]="rifa.clienteNombre || 'Logo'" />
+        }
+        <span>{{ rifa.clienteNombre || 'Rifa activa' }}</span>
+      </div>
+      <h1>{{ rifa.titulo }}</h1>
+      <p>{{ rifa.descripcion }}</p>
+    </div>
+    <div class="price-box">
+      <span>Valor por fila</span>
+      <strong>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+    </div>
+  </section>
+
+  <section class="detail-layout">
+    <div class="numbers-panel">
+      @if (rifa.premios.length) {
+        <div class="public-prizes">
+          @for (premio of rifa.premios; track premio.posicion) {
+            <article>
+              @if (premio.imagenUrl) {
+                <img [src]="premio.imagenUrl" alt="" />
+              }
+              <div>
+                <span>Premio {{ premio.posicion }}</span>
+                <strong>{{ premio.descripcion }}</strong>
+              </div>
+            </article>
+          }
+        </div>
+      }
+
+      <div class="legend">
+        <span><i class="dot available"></i> Disponible</span>
+        <span><i class="dot pending"></i> Pendiente</span>
+        <span><i class="dot sold"></i> Ocupado</span>
+      </div>
+
+      <div class="raffle-shape">
+        <strong>{{ rifa.cantidadFilas }} filas</strong>
+        <span>{{ rifa.cantidadNumeros }} números de sorteo</span>
+      </div>
+
+      <div class="number-grid grouped">
+        @for (numero of rifa.numeros; track numero.id) {
+          <button
+            type="button"
+            class="number-cell grouped-cell"
+            [class.available]="numero.estado === 'DISPONIBLE'"
+            [class.pending]="numero.estado === 'PENDIENTE'"
+            [class.sold]="numero.estado === 'VENDIDO'"
+            [class.selected]="seleccion().includes(numero.valor)"
+            [disabled]="numero.estado !== 'DISPONIBLE' || !!compra()"
+            (click)="toggle(numero)"
+          >
+            <strong>{{ numero.etiqueta }}</strong>
+            @if (numero.numerosIncluidos.length > 1) {
+              <span>{{ numero.numerosIncluidos.join('-') }}</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <aside class="form-panel">
+      @if (compra(); as compra) {
+        <div class="success-panel">
+          <h2>Gracias por realizar tu compra</h2>
+          @if (compraConComprobante()) {
+            <p>Tu comprobante quedó informado. La reserva queda pendiente hasta que el admin la apruebe o cancele.</p>
+          } @else {
+            <p>Tenés 5 minutos para cargar el comprobante o avisar que lo enviaste por WhatsApp.</p>
+            <div class="countdown-box">
+              <span>Tiempo restante</span>
+              <strong>{{ cuentaRegresiva() }}</strong>
+            </div>
+          }
+          <dl>
+            <div>
+              <dt>Filas</dt>
+              <dd>{{ compra.numeros.join(', ') }}</dd>
+            </div>
+            <div>
+              <dt>Total</dt>
+              <dd>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Alias</dt>
+              <dd>{{ compra.aliasTransferencia }}</dd>
+            </div>
+            <div>
+              <dt>WhatsApp</dt>
+              <dd>{{ compra.whatsappComprobante }}</dd>
+            </div>
+          </dl>
+
+          @if (comprobanteMensaje()) {
+            <p class="notice">{{ comprobanteMensaje() }}</p>
+          }
+
+          <div class="payment-actions">
+            <label class="file-action primary-file-action">
+              {{ subiendoComprobante() ? 'Subiendo...' : 'Cargar comprobante' }}
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                capture="environment"
+                [disabled]="subiendoComprobante() || compraConComprobante()"
+                (change)="cargarComprobante($event)"
+              />
+            </label>
+
+            <a class="ghost-action full-width" [href]="whatsappUrl(compra)" target="_blank" rel="noopener">
+              Abrir WhatsApp
+            </a>
+
+            <button
+              class="ghost-action full-width"
+              type="button"
+              [disabled]="marcandoWhatsapp() || compraConComprobante()"
+              (click)="marcarComprobanteWhatsapp()"
+            >
+              {{ compra.comprobanteWhatsapp ? 'Comprobante informado por WhatsApp' : (marcandoWhatsapp() ? 'Registrando...' : 'Ya envié el comprobante por WhatsApp') }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <h2>Tu seleccion</h2>
+        <div class="selected-list">
+          @for (numero of numerosSeleccionados(); track numero.id) {
+            <span>
+              {{ numero.etiqueta }}
+              @if (numero.numerosIncluidos.length > 1) {
+                - {{ numero.numerosIncluidos.join('-') }}
+              }
+            </span>
+          } @empty {
+            <span class="muted">Sin filas seleccionadas</span>
+          }
+        </div>
+
+        <div class="total-row">
+          <span>Total</span>
+          <strong>{{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="confirmar()">
+          <label>
+            Nombre
+            <input type="text" formControlName="nombre" />
+          </label>
+          <label>
+            DNI
+            <input type="text" formControlName="dni" />
+          </label>
+          <label>
+            Telefono
+            <input type="text" formControlName="telefono" />
+          </label>
+
+          @if (error()) {
+            <p class="alert">{{ error() }}</p>
+          }
+
+          <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
+            {{ enviando() ? 'Confirmando...' : 'Confirmar compra' }}
+          </button>
+        </form>
+      }
+    </aside>
+  </section>
+} @else {
+  <section class="content-shell">
+    @if (error()) {
+      <p class="alert">{{ error() }}</p>
+    } @else {
+      <p class="muted">Cargando rifa...</p>
+    }
+  </section>
+}

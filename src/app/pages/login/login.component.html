@@ -1,0 +1,26 @@
+<section class="auth-layout">
+  <form class="form-panel narrow" [formGroup]="form" (ngSubmit)="ingresar()">
+    <div>
+      <p class="eyebrow">Administración</p>
+      <h1>Ingreso admin</h1>
+    </div>
+
+    <label>
+      Usuario
+      <input type="text" formControlName="username" autocomplete="username" />
+    </label>
+
+    <label>
+      Contraseña
+      <input type="password" formControlName="password" autocomplete="current-password" />
+    </label>
+
+    @if (error()) {
+      <p class="alert">{{ error() }}</p>
+    }
+
+    <button class="primary-action" type="submit" [disabled]="cargando()">
+      {{ cargando() ? 'Ingresando...' : 'Ingresar' }}
+    </button>
+  </form>
+</section>

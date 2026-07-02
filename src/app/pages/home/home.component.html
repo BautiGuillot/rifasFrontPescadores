@@ -1,0 +1,44 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Rifas activas</p>
+    <h1>Rifas disponibles</h1>
+  </div>
+  <a class="ghost-action" routerLink="/finalizadas">Ver finalizadas</a>
+</section>
+
+<section class="content-shell">
+  @if (cargando()) {
+    <p class="muted">Cargando rifas...</p>
+  } @else if (error()) {
+    <p class="alert">{{ error() }}</p>
+  } @else if (!rifas().length) {
+    <p class="empty">No hay rifas publicadas por el momento.</p>
+  } @else {
+    <div class="raffle-grid">
+      @for (rifa of rifas(); track rifa.id) {
+        <article class="raffle-card">
+          <div>
+            <span class="status status-green">{{ rifa.estado }}</span>
+            <h2>{{ rifa.titulo }}</h2>
+            <p>{{ rifa.descripcion }}</p>
+          </div>
+          <dl class="stats-row">
+            <div>
+              <dt>Números</dt>
+              <dd>{{ rifa.cantidadNumeros }}</dd>
+            </div>
+            <div>
+              <dt>Valor</dt>
+              <dd>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</dd>
+            </div>
+            <div>
+              <dt>Sorteo</dt>
+              <dd>{{ rifa.fechaSorteo ? (rifa.fechaSorteo | date: 'dd/MM') : 'A definir' }}</dd>
+            </div>
+          </dl>
+          <a class="primary-action" [routerLink]="['/r', rifa.slug]">Elegir números</a>
+        </article>
+      }
+    </div>
+  }
+</section>

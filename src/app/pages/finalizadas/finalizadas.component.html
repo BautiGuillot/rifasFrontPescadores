@@ -1,0 +1,46 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Historial</p>
+    <h1>Rifas finalizadas</h1>
+  </div>
+</section>
+
+<section class="content-shell">
+  @if (cargando()) {
+    <p class="muted">Cargando historial...</p>
+  } @else if (!rifas().length) {
+    <p class="empty">Todavía no hay rifas finalizadas.</p>
+  } @else {
+    <div class="table-panel">
+      <table>
+        <thead>
+          <tr>
+            <th>Rifa</th>
+            <th>Sorteo</th>
+            <th>Ganadores</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rifa of rifas(); track rifa.id) {
+            <tr>
+              <td>
+                <strong>{{ rifa.titulo }}</strong>
+                <span>{{ rifa.descripcion }}</span>
+              </td>
+              <td>{{ rifa.fechaSorteo ? (rifa.fechaSorteo | date: 'dd/MM/yyyy') : 'A definir' }}</td>
+              <td>
+                <div class="winner-list">
+                  @for (ganador of rifa.ganadores; track ganador.posicion) {
+                    <span>{{ ganador.posicion }}º {{ ganador.numero }} - {{ ganador.nombreComprador }}</span>
+                  } @empty {
+                    <span class="muted">Sin cargar</span>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

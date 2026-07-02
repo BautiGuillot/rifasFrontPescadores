@@ -1,0 +1,106 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Rifa</p>
+    <h1>{{ rifa()?.titulo || 'Detalle de rifa' }}</h1>
+  </div>
+  <a class="small-button" routerLink="/admin">Volver</a>
+</section>
+
+<section class="admin-shell">
+  @if (mensaje()) {
+    <p class="notice">{{ mensaje() }}</p>
+  }
+  @if (error()) {
+    <p class="alert">{{ error() }}</p>
+  }
+
+  @if (rifa(); as detalle) {
+    <section class="table-panel raffle-detail-panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>{{ detalle.titulo }}</h2>
+          <span class="muted">Link publico: {{ linkPublicoRifa(detalle) }}</span>
+        </div>
+        <div class="actions">
+          <a class="small-button" [href]="linkPublicoRifa(detalle)" target="_blank" rel="noopener">Abrir link</a>
+          <button type="button" (click)="copiarLinkRifa(detalle)">Copiar</button>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric"><span>Estado</span><strong>{{ detalle.estado }}</strong></div>
+        <div class="metric"><span>Valor</span><strong>{{ detalle.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong></div>
+        <div class="metric"><span>Numeros</span><strong>{{ detalle.cantidadNumeros }}</strong></div>
+        <div class="metric"><span>Filas</span><strong>{{ detalle.cantidadFilas }}</strong></div>
+        <div class="metric"><span>Creada</span><strong>{{ detalle.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</strong></div>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot available"></i> Disponible</span>
+        <span><i class="dot pending"></i> Pendiente</span>
+        <span><i class="dot sold"></i> Ocupado</span>
+      </div>
+
+      <div class="number-grid grouped admin-number-grid">
+        @for (numero of detalle.numeros; track numero.id) {
+          <div
+            class="number-cell grouped-cell"
+            [class.available]="numero.estado === 'DISPONIBLE'"
+            [class.pending]="numero.estado === 'PENDIENTE'"
+            [class.sold]="numero.estado === 'VENDIDO'"
+          >
+            <strong>{{ numero.etiqueta }}</strong>
+            @if (numero.numerosIncluidos.length > 1) {
+              <span>{{ numero.numerosIncluidos.join('-') }}</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="table-panel raffle-detail-panel">
+      <h2>Compras de esta rifa</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Numeros</th>
+            <th>Comprobante</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (compra of compras(); track compra.id) {
+            <tr>
+              <td><strong>{{ compra.nombre }}</strong><span>DNI {{ compra.dni }} · {{ compra.telefono }}</span></td>
+              <td>{{ compra.numeros.join(', ') }}</td>
+              <td>
+                @if (compra.comprobanteArchivo) {
+                  <span class="status">Archivo</span>
+                  <button type="button" class="small-button" (click)="abrirComprobante(compra)">Ver</button>
+                } @else if (compra.comprobanteWhatsapp) {
+                  <span class="status">WhatsApp</span>
+                } @else {
+                  <span class="muted">Sin comprobante</span>
+                }
+              </td>
+              <td>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+              <td><span class="status">{{ compra.estado }}</span></td>
+              <td class="actions">
+                <a class="small-button" [href]="whatsappUrl(compra.telefono)" target="_blank" rel="noopener">WhatsApp</a>
+                @if (compra.estado === 'PENDIENTE_PAGO') {
+                  <button type="button" (click)="aprobarCompra(compra.id)">Aprobar</button>
+                  <button type="button" class="danger" (click)="cancelarCompra(compra.id)">Cancelar</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6">No hay compras para esta rifa.</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</section>

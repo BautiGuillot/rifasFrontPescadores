@@ -14,10 +14,12 @@ export class AuthService {
   private readonly refreshToken = signal(localStorage.getItem('refreshToken'));
   private readonly rolSignal = signal<RolUsuario | null>((localStorage.getItem('rol') as RolUsuario | null) || null);
   private readonly clienteNombreSignal = signal(localStorage.getItem('clienteNombre'));
+  private readonly clienteColorSignal = signal(localStorage.getItem('clienteColor'));
 
   readonly isLoggedIn = computed(() => this.tokenVigente(this.accessToken()));
   readonly rol = computed(() => this.isLoggedIn() ? this.rolSignal() : null);
   readonly clienteNombre = computed(() => this.clienteNombreSignal());
+  readonly clienteColor = computed(() => this.clienteColorSignal());
 
   get token(): string | null {
     return this.accessToken();
@@ -52,6 +54,15 @@ export class AuthService {
     this.router.navigateByUrl('/');
   }
 
+  actualizarColorCliente(color: string | null | undefined): void {
+    if (color) {
+      localStorage.setItem('clienteColor', color);
+    } else {
+      localStorage.removeItem('clienteColor');
+    }
+    this.clienteColorSignal.set(color || null);
+  }
+
   private guardarSesion(response: LoginResponse): void {
     localStorage.setItem('accessToken', response.token);
     localStorage.setItem('refreshToken', response.refreshToken);
@@ -72,10 +83,12 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('rol');
     localStorage.removeItem('clienteNombre');
+    localStorage.removeItem('clienteColor');
     this.accessToken.set(null);
     this.refreshToken.set(null);
     this.rolSignal.set(null);
     this.clienteNombreSignal.set(null);
+    this.clienteColorSignal.set(null);
   }
 
   private tokenVigente(token: string | null): boolean {

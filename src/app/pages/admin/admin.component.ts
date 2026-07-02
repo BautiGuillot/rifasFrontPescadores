@@ -95,6 +95,7 @@ export class AdminComponent {
     }).subscribe({
       next: (cliente) => {
         this.miMarca.set(cliente);
+        this.auth.actualizarColorCliente(cliente.colorPrincipal);
         this.marcaForm.reset({
           colorPrincipal: cliente.colorPrincipal || '#082d50',
           logoUrl: cliente.logoUrl || '',
@@ -116,6 +117,7 @@ export class AdminComponent {
     this.api.subirMiLogo(archivo).subscribe({
       next: (cliente) => {
         this.miMarca.set(cliente);
+        this.auth.actualizarColorCliente(cliente.colorPrincipal);
         this.marcaForm.patchValue({ logoUrl: cliente.logoUrl || '' });
         this.mensaje.set('Logo actualizado.');
         this.error.set('');
@@ -416,6 +418,7 @@ export class AdminComponent {
     this.api.obtenerMiMarca().subscribe({
       next: (cliente) => {
         this.miMarca.set(cliente);
+        this.auth.actualizarColorCliente(cliente.colorPrincipal);
         this.marcaForm.reset({
           colorPrincipal: cliente.colorPrincipal || '#082d50',
           logoUrl: cliente.logoUrl || '',

@@ -1,3 +1,9 @@
+.app-shell {
+  --brand-blue-900: var(--tenant-color, #082d50);
+  --brand-blue-800: color-mix(in srgb, var(--tenant-color, #082d50) 88%, #ffffff);
+  --brand-blue-700: color-mix(in srgb, var(--tenant-color, #082d50) 76%, #ffffff);
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -7,7 +13,7 @@
   justify-content: space-between;
   gap: 24px;
   padding: 14px clamp(16px, 4vw, 48px);
-  background: rgba(8, 45, 80, 0.96);
+  background: color-mix(in srgb, var(--tenant-color, #082d50) 96%, #000000);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(10px);
 }
@@ -63,7 +69,7 @@ main {
   justify-content: flex-end;
   gap: 18px;
   padding: 18px clamp(16px, 4vw, 48px);
-  background: #082d50;
+  background: var(--tenant-color, #082d50);
   color: #e6eef7;
 }
 

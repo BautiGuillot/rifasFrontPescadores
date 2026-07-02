@@ -1,22 +1,24 @@
-<header class="topbar">
-  <a class="brand" routerLink="/login">
-    <span>Sistema de rifas</span>
-  </a>
+<div class="app-shell" [style.--tenant-color]="tenantColor()">
+  <header class="topbar">
+    <a class="brand" [routerLink]="homeLink()">
+      <span>Sistema de rifas</span>
+    </a>
 
-  <nav>
-    @if (auth.isLoggedIn()) {
-      <a routerLink="/admin" routerLinkActive="active">Admin</a>
-      <button type="button" class="link-button" (click)="logout()">Salir</button>
-    } @else {
-      <a routerLink="/login" routerLinkActive="active">Ingresar</a>
-    }
-  </nav>
-</header>
+    <nav>
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+        <button type="button" class="link-button" (click)="logout()">Salir</button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active">Ingresar</a>
+      }
+    </nav>
+  </header>
 
-<main>
-  <router-outlet />
-</main>
+  <main>
+    <router-outlet />
+  </main>
 
-<footer class="site-footer">
-  <p>Plataforma de rifas</p>
-</footer>
+  <footer class="site-footer">
+    <p>Plataforma de rifas</p>
+  </footer>
+</div>

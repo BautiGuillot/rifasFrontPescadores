@@ -100,9 +100,6 @@
     <button type="button" [class.active]="tab() === 'compras'" (click)="cambiarTab('compras')">
       Compras
     </button>
-    <button type="button" [class.active]="tab() === 'ganadores'" (click)="cambiarTab('ganadores')">
-      Ganadores
-    </button>
     <button type="button" [class.active]="tab() === 'marca'" (click)="cambiarTab('marca')">
       Marca
     </button>
@@ -289,30 +286,6 @@
         </tbody>
       </table>
     </div>
-  }
-
-  @if (tab() === 'ganadores') {
-    <form class="form-panel narrow" [formGroup]="ganadoresForm" (ngSubmit)="guardarGanadores()">
-      <h2>Cargar ganadores</h2>
-      <label>
-        Rifa finalizada
-        <select formControlName="rifaId" (change)="prepararGanadores($any($event.target).value)">
-          <option [value]="0">Seleccionar</option>
-          @for (rifa of rifasFinalizadas(); track rifa.id) {
-            <option [value]="rifa.id">{{ rifa.titulo }}</option>
-          }
-        </select>
-      </label>
-      <div class="nested-list" formArrayName="ganadores">
-        @for (ganador of ganadores.controls; track $index) {
-          <div [formGroupName]="$index" class="nested-row">
-            <input type="number" formControlName="posicion" aria-label="Posición ganador" />
-            <input type="number" formControlName="numero" placeholder="Número ganador" />
-          </div>
-        }
-      </div>
-      <button class="primary-action" type="submit">Guardar ganadores</button>
-    </form>
   }
 
   @if (tab() === 'marca') {

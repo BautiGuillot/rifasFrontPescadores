@@ -6,7 +6,7 @@ import { Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen 
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
 
-type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'ganadores' | 'marca';
+type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'marca';
 
 @Component({
   selector: 'app-admin',
@@ -48,11 +48,6 @@ export class AdminComponent {
     premios: this.fb.array([this.crearPremio(1)]),
   });
 
-  readonly ganadoresForm = this.fb.nonNullable.group({
-    rifaId: [0, Validators.required],
-    ganadores: this.fb.array([this.crearGanador(1)]),
-  });
-
   readonly clienteForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]{3,80}$/)]],
@@ -67,9 +62,6 @@ export class AdminComponent {
     logoUrl: [''],
   });
 
-  readonly rifasFinalizadas = computed(() =>
-    this.rifas().filter((rifa) => rifa.estado === 'FINALIZADA'),
-  );
   readonly rifasFiltradas = computed(() => {
     const filtro = this.rifaFiltro();
     return filtro ? this.rifas().filter((rifa) => rifa.estado === filtro) : this.rifas();
@@ -81,10 +73,6 @@ export class AdminComponent {
 
   get premios(): FormArray {
     return this.form.controls.premios;
-  }
-
-  get ganadores(): FormArray {
-    return this.ganadoresForm.controls.ganadores;
   }
 
   cambiarTab(tab: AdminTab): void {
@@ -340,35 +328,6 @@ export class AdminComponent {
     });
   }
 
-  prepararGanadores(rifaIdValue: string): void {
-    const rifaId = Number(rifaIdValue);
-    const rifa = this.rifas().find((item) => item.id === rifaId);
-    this.ganadoresForm.controls.rifaId.setValue(rifaId);
-    this.ganadores.clear();
-    const cantidad = rifa?.cantidadGanadores || 1;
-    for (let i = 1; i <= cantidad; i++) {
-      this.ganadores.push(this.crearGanador(i));
-    }
-  }
-
-  guardarGanadores(): void {
-    if (this.ganadoresForm.invalid) {
-      this.ganadoresForm.markAllAsTouched();
-      return;
-    }
-    if (!confirm('¿Guardar ganadores para esta rifa?')) {
-      return;
-    }
-    const raw = this.ganadoresForm.getRawValue();
-    this.api.cargarGanadores(raw.rifaId, raw.ganadores).subscribe({
-      next: () => {
-        this.mensaje.set('Ganadores cargados.');
-        this.cargarTodo();
-      },
-      error: (error) => this.error.set(error.error?.message || 'No se pudieron cargar los ganadores.'),
-    });
-  }
-
   guardarCliente(): void {
     const editandoId = this.editandoClienteId();
     this.clienteForm.controls.password.setErrors(null);
@@ -528,10 +487,4 @@ export class AdminComponent {
     });
   }
 
-  private crearGanador(posicion: number) {
-    return this.fb.nonNullable.group({
-      posicion: [posicion, Validators.required],
-      numero: [0, Validators.required],
-    });
-  }
 }

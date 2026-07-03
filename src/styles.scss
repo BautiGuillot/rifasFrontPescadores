@@ -442,6 +442,15 @@ dd {
   padding: 20px;
 }
 
+.form-panel form {
+  display: grid;
+  gap: 12px;
+}
+
+.form-panel form .primary-action {
+  margin-top: 8px;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -582,6 +591,15 @@ textarea {
   border-radius: 6px;
   background: #e2e8f0;
   font-weight: 900;
+}
+
+.detail-layout .selected-list span {
+  background: color-mix(in srgb, var(--brand-blue-900) 12%, #ffffff);
+  color: var(--brand-blue-900);
+}
+
+.detail-layout .form-panel .primary-action {
+  min-height: 46px;
 }
 
 .total-row {

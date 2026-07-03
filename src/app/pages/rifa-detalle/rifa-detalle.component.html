@@ -19,7 +19,11 @@
     </div>
   </section>
 
-  <section class="detail-layout">
+  <section
+    class="detail-layout"
+    [style.--brand-blue-900]="colorPrincipal(rifa)"
+    [style.--brand-blue-700]="colorPrincipal(rifa)"
+  >
     <div class="numbers-panel">
       @if (rifa.premios.length) {
         <div class="public-prizes">

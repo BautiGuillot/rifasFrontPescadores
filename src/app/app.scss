@@ -2,6 +2,10 @@
   --brand-blue-900: var(--tenant-color, #082d50);
   --brand-blue-800: color-mix(in srgb, var(--tenant-color, #082d50) 88%, #ffffff);
   --brand-blue-700: color-mix(in srgb, var(--tenant-color, #082d50) 76%, #ffffff);
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 247, 251, 0.96)),
+    #f5f7fb;
 }
 
 .topbar {
@@ -12,10 +16,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px clamp(16px, 4vw, 48px);
-  background: color-mix(in srgb, var(--tenant-color, #082d50) 96%, #000000);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px);
+  padding: 12px clamp(16px, 4vw, 48px);
+  background: color-mix(in srgb, var(--tenant-color, #082d50) 92%, #111827);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(14px);
 }
 
 .brand {
@@ -23,7 +28,7 @@
   align-items: center;
   gap: 10px;
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 900;
   text-decoration: none;
 }
 
@@ -50,6 +55,7 @@ nav a,
   font: inherit;
   font-weight: 700;
   text-decoration: none;
+  transition: background 160ms ease, color 160ms ease;
 }
 
 nav a.active,
@@ -68,8 +74,8 @@ main {
   align-items: center;
   justify-content: flex-end;
   gap: 18px;
-  padding: 18px clamp(16px, 4vw, 48px);
-  background: var(--tenant-color, #082d50);
+  padding: 16px clamp(16px, 4vw, 48px);
+  background: color-mix(in srgb, var(--tenant-color, #082d50) 92%, #111827);
   color: #e6eef7;
 }
 

@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Cliente, Compra, DashboardAdmin, EstadoCompra, RifaResumen } from '../../core/api.models';
+import { Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
 
@@ -23,6 +23,8 @@ export class AdminComponent {
   readonly compras = signal<Compra[]>([]);
   readonly clientes = signal<Cliente[]>([]);
   readonly miMarca = signal<Cliente | null>(null);
+  readonly modalRifaAbierto = signal(false);
+  readonly rifaFiltro = signal<EstadoRifa | ''>('');
   readonly compraFiltro = signal<EstadoCompra | ''>('PENDIENTE_PAGO');
   readonly mensaje = signal('');
   readonly error = signal('');
@@ -68,6 +70,10 @@ export class AdminComponent {
   readonly rifasFinalizadas = computed(() =>
     this.rifas().filter((rifa) => rifa.estado === 'FINALIZADA'),
   );
+  readonly rifasFiltradas = computed(() => {
+    const filtro = this.rifaFiltro();
+    return filtro ? this.rifas().filter((rifa) => rifa.estado === filtro) : this.rifas();
+  });
 
   constructor() {
     this.auth.rol() === 'SUPER_ADMIN' ? this.cargarClientes() : this.cargarTodo();
@@ -168,6 +174,15 @@ export class AdminComponent {
     }
   }
 
+  abrirCrearRifa(): void {
+    this.limpiarFormularioRifa();
+    this.modalRifaAbierto.set(true);
+  }
+
+  cambiarFiltroRifas(estado: EstadoRifa | ''): void {
+    this.rifaFiltro.set(estado);
+  }
+
   guardarRifa(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -194,6 +209,7 @@ export class AdminComponent {
     this.api.detalleRifa(rifa.id).subscribe({
       next: (detalle) => {
         this.editandoRifaId.set(detalle.id);
+        this.modalRifaAbierto.set(true);
         this.form.patchValue({
           titulo: detalle.titulo,
           slug: detalle.slug,
@@ -488,6 +504,7 @@ export class AdminComponent {
 
   private limpiarFormularioRifa(): void {
     this.editandoRifaId.set(null);
+    this.modalRifaAbierto.set(false);
     this.form.reset({
       titulo: '',
       slug: '',

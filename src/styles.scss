@@ -150,6 +150,7 @@ dd {
 }
 
 .primary-action,
+.primary-inline-action,
 .ghost-action,
 .actions button,
 .toolbar button,
@@ -174,6 +175,12 @@ dd {
   background: var(--brand-blue-900);
   color: #ffffff;
   border-color: var(--brand-blue-900);
+}
+
+.primary-inline-action {
+  background: var(--brand-blue-900) !important;
+  color: #ffffff !important;
+  border-color: var(--brand-blue-900) !important;
 }
 
 .primary-action:disabled {
@@ -291,6 +298,11 @@ dd {
   margin-bottom: 14px;
 }
 
+.table-toolbar {
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .legend span {
   display: inline-flex;
   align-items: center;
@@ -387,6 +399,23 @@ dd {
   display: grid;
   gap: 14px;
   padding: 18px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: start center;
+  overflow: auto;
+  padding: 28px 16px;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.modal-panel {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
 }
 
 .panel-title-row {
@@ -824,6 +853,14 @@ td span {
   max-height: 420px;
   overflow: auto;
   padding: 4px;
+}
+
+.admin-number-grid .number-cell {
+  text-align: center;
+}
+
+.admin-number-grid .grouped-cell {
+  justify-items: center;
 }
 
 @media (max-width: 920px) {

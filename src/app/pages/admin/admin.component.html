@@ -134,49 +134,60 @@
   }
 
   @if (tab() === 'rifas') {
-    <div class="split-layout">
-      <form class="form-panel" [formGroup]="form" (ngSubmit)="guardarRifa()">
-        <div class="panel-title-row">
-          <h2>{{ editandoRifaId() ? 'Editar rifa' : 'Nueva rifa' }}</h2>
-          @if (editandoRifaId()) {
-            <button type="button" class="small-button" (click)="cancelarEdicion()">Cancelar edición</button>
-          }
-        </div>
-        <label>Título <input type="text" formControlName="titulo" /></label>
-        <label>Slug público <input type="text" formControlName="slug" placeholder="sorteo-navidad" /></label>
-        <label>Descripción <textarea rows="3" formControlName="descripcion"></textarea></label>
-        <div class="form-grid">
-          <label>Números sorteo <input type="number" formControlName="cantidadNumeros" /></label>
-          <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>
-          <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
-          <label>Valor <input type="number" formControlName="valorNumero" /></label>
-        </div>
-        <label>Alias <input type="text" formControlName="aliasTransferencia" /></label>
-        <label>WhatsApp <input type="text" formControlName="whatsappComprobante" /></label>
+    <div class="toolbar table-toolbar">
+      <button type="button" class="primary-inline-action" (click)="abrirCrearRifa()">Crear rifa</button>
+      <button type="button" [class.active]="rifaFiltro() === ''" (click)="cambiarFiltroRifas('')">Todas</button>
+      <button type="button" [class.active]="rifaFiltro() === 'BORRADOR'" (click)="cambiarFiltroRifas('BORRADOR')">Borrador</button>
+      <button type="button" [class.active]="rifaFiltro() === 'PUBLICADA'" (click)="cambiarFiltroRifas('PUBLICADA')">Publicadas</button>
+      <button type="button" [class.active]="rifaFiltro() === 'FINALIZADA'" (click)="cambiarFiltroRifas('FINALIZADA')">Finalizadas</button>
+      <button type="button" [class.active]="rifaFiltro() === 'CANCELADA'" (click)="cambiarFiltroRifas('CANCELADA')">Canceladas</button>
+    </div>
 
-        <div class="nested-list" formArrayName="premios">
-          @for (premio of premios.controls; track $index) {
-            <div [formGroupName]="$index" class="nested-row prize-row">
-              <input type="number" formControlName="posicion" aria-label="Posición premio" />
-              <div class="prize-fields">
-                <input type="text" formControlName="descripcion" placeholder="Descripción del premio" />
-                <label class="file-action">
-                  {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
-                  <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
-                </label>
+    @if (modalRifaAbierto()) {
+      <div class="modal-backdrop">
+        <form class="form-panel modal-panel" [formGroup]="form" (ngSubmit)="guardarRifa()">
+          <div class="panel-title-row">
+            <h2>{{ editandoRifaId() ? 'Editar rifa' : 'Nueva rifa' }}</h2>
+            <button type="button" class="small-button" (click)="cancelarEdicion()">Cerrar</button>
+          </div>
+          <label>Título <input type="text" formControlName="titulo" /></label>
+          <label>Slug público <input type="text" formControlName="slug" placeholder="sorteo-navidad" /></label>
+          <label>Descripción <textarea rows="3" formControlName="descripcion"></textarea></label>
+          <div class="form-grid">
+            <label>Números sorteo <input type="number" formControlName="cantidadNumeros" /></label>
+            <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>
+            <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
+            <label>Valor <input type="number" formControlName="valorNumero" /></label>
+          </div>
+          <label>Alias <input type="text" formControlName="aliasTransferencia" /></label>
+          <label>WhatsApp <input type="text" formControlName="whatsappComprobante" /></label>
+
+          <div class="nested-list" formArrayName="premios">
+            @for (premio of premios.controls; track $index) {
+              <div [formGroupName]="$index" class="nested-row prize-row">
+                <input type="number" formControlName="posicion" aria-label="Posición premio" />
+                <div class="prize-fields">
+                  <input type="text" formControlName="descripcion" placeholder="Descripción del premio" />
+                  <label class="file-action">
+                    {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
+                    <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
+                  </label>
+                </div>
+                @if (premio.value.imagenUrl) {
+                  <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
+                }
               </div>
-              @if (premio.value.imagenUrl) {
-                <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
-              }
-            </div>
-          }
-        </div>
+            }
+          </div>
 
-        <button class="primary-action" type="submit">
-          {{ editandoRifaId() ? 'Guardar cambios' : 'Crear rifa' }}
-        </button>
-      </form>
+          <button class="primary-action" type="submit">
+            {{ editandoRifaId() ? 'Guardar cambios' : 'Crear rifa' }}
+          </button>
+        </form>
+      </div>
+    }
 
+    <div>
       <div class="table-panel">
         <table>
           <thead>
@@ -188,7 +199,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (rifa of rifas(); track rifa.id) {
+            @for (rifa of rifasFiltradas(); track rifa.id) {
               <tr>
                 <td>
                   <strong>{{ rifa.titulo }}</strong>
@@ -216,6 +227,8 @@
                   }
                 </td>
               </tr>
+            } @empty {
+              <tr><td colspan="4">No hay rifas para este filtro.</td></tr>
             }
           </tbody>
         </table>

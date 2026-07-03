@@ -172,8 +172,10 @@ export class AdminComponent {
   }
 
   guardarRifa(): void {
+    this.form.controls.slug.setValue(this.normalizarSlug(this.form.controls.slug.value));
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Revisá los datos de la rifa. El slug debe tener solo letras, números y guiones.');
       return;
     }
     const raw = this.form.getRawValue();
@@ -181,7 +183,10 @@ export class AdminComponent {
     const request = editandoId ? this.api.editarRifa(editandoId, raw) : this.api.crearRifa(raw);
     request.subscribe({
       next: () => {
-        this.mensaje.set(editandoId ? 'Rifa actualizada.' : 'Rifa creada en borrador.');
+        this.mensaje.set(editandoId ? 'Rifa actualizada correctamente.' : 'Rifa creada correctamente.');
+        this.error.set('');
+        this.tab.set('rifas');
+        this.rifaFiltro.set('');
         this.limpiarFormularioRifa();
         this.cargarTodo();
       },
@@ -477,6 +482,17 @@ export class AdminComponent {
     });
     this.premios.clear();
     this.premios.push(this.crearPremio(1));
+  }
+
+  private normalizarSlug(valor: string): string {
+    return valor
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
   }
 
   private crearPremio(posicion: number) {

@@ -148,7 +148,11 @@
             <button type="button" class="small-button" (click)="cancelarEdicion()">Cerrar</button>
           </div>
           <label>Título <input type="text" formControlName="titulo" /></label>
-          <label>Slug público <input type="text" formControlName="slug" placeholder="sorteo-navidad" /></label>
+          <label>
+            Slug público
+            <input type="text" formControlName="slug" placeholder="sorteo-navidad" />
+            <span class="field-hint">Se usa para el link público. Si escribís espacios se convierten en guiones.</span>
+          </label>
           <label>Descripción <textarea rows="3" formControlName="descripcion"></textarea></label>
           <div class="form-grid">
             <label>Números sorteo <input type="number" formControlName="cantidadNumeros" /></label>

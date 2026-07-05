@@ -1064,9 +1064,68 @@ td span {
   margin: 0;
 }
 
+.admin-rifa-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-rifa-header {
+  margin-bottom: 0;
+}
+
+.admin-raffle-layout {
+  padding: 0;
+}
+
+.admin-raffle-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-detail-actions {
+  align-items: flex-start;
+}
+
+.compact-metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.admin-side-card {
+  position: sticky;
+  top: 82px;
+}
+
+.admin-purchase-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.admin-purchase-summary div {
+  min-width: 0;
+  border: 1px solid #d7e1e8;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.admin-purchase-summary span {
+  display: block;
+  color: #64727d;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.admin-purchase-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--brand-blue-900);
+  font-size: 1.25rem;
+}
+
 .admin-number-grid {
-  max-height: 420px;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   padding: 6px;
 }
 
@@ -1086,6 +1145,10 @@ td span {
 
   .metric.wide {
     grid-column: auto;
+  }
+
+  .admin-side-card {
+    position: static;
   }
 }
 
@@ -1297,5 +1360,50 @@ td span {
   .payment-actions .file-action {
     min-height: 52px;
     border-radius: 12px;
+  }
+
+  .admin-rifa-shell {
+    padding: 0 0 28px;
+  }
+
+  .admin-rifa-header {
+    width: min(100%, 560px);
+  }
+
+  .admin-raffle-layout {
+    width: min(100%, 560px);
+  }
+
+  .admin-detail-actions {
+    gap: 14px;
+  }
+
+  .admin-detail-actions .actions {
+    width: 100%;
+  }
+
+  .admin-detail-actions .actions > * {
+    flex: 1 1 120px;
+  }
+
+  .compact-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .compact-metric-grid .metric {
+    padding: 12px;
+    box-shadow: none;
+  }
+
+  .admin-purchase-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-purchases-panel {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow-x: auto;
   }
 }

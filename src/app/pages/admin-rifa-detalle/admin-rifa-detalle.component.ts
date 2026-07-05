@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Compra, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
@@ -18,6 +18,12 @@ export class AdminRifaDetalleComponent {
   readonly compras = signal<Compra[]>([]);
   readonly mensaje = signal('');
   readonly error = signal('');
+  readonly comprasPendientes = computed(() =>
+    this.compras().filter((compra) => compra.estado === 'PENDIENTE_PAGO').length,
+  );
+  readonly comprasAprobadas = computed(() =>
+    this.compras().filter((compra) => compra.estado === 'APROBADA').length,
+  );
 
   constructor() {
     this.cargarDetalle();
@@ -36,6 +42,14 @@ export class AdminRifaDetalleComponent {
 
   whatsappUrl(numero: string): string {
     return `https://wa.me/${numero.replace(/\D/g, '')}`;
+  }
+
+  colorPrincipal(rifa: RifaDetalle): string {
+    return rifa.clienteColorPrincipal || '#082d50';
+  }
+
+  mediaUrl(url?: string | null): string {
+    return this.api.mediaUrl(url);
   }
 
   aprobarCompra(id: number): void {

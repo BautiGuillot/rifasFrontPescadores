@@ -682,6 +682,11 @@ textarea {
   gap: 18px;
 }
 
+.public-checkout-panel .success-panel {
+  display: grid;
+  gap: 14px;
+}
+
 .total-row {
   display: flex;
   align-items: center;
@@ -1328,6 +1333,19 @@ td span {
     padding: 18px;
     background: #ffffff;
     box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+  }
+
+  .public-checkout-panel .success-panel {
+    margin-top: 22px;
+    border: 1px solid #d7e1e8;
+    border-radius: 16px;
+    padding: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+  }
+
+  .public-checkout-panel .success-panel h2 {
+    margin-bottom: 4px;
   }
 
   .public-checkout-panel form {

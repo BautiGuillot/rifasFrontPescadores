@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Compra, NumeroRifa, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { TenantThemeService } from '../../core/tenant-theme.service';
 
 @Component({
   selector: 'app-rifa-detalle',
@@ -14,6 +15,7 @@ export class RifaDetalleComponent implements OnDestroy {
   private readonly api = inject(RifasApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  private readonly theme = inject(TenantThemeService);
   readonly rifa = signal<RifaDetalle | null>(null);
   readonly seleccion = signal<number[]>([]);
   readonly compra = signal<Compra | null>(null);
@@ -74,6 +76,7 @@ export class RifaDetalleComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerCuentaRegresiva();
+    this.theme.clearPublicColor();
   }
 
   toggle(numero: NumeroRifa): void {
@@ -173,7 +176,10 @@ export class RifaDetalleComponent implements OnDestroy {
   private cargar(id: number): void {
     this.error.set('');
     this.api.detalleRifa(id).subscribe({
-      next: (rifa) => this.rifa.set(rifa),
+      next: (rifa) => {
+        this.rifa.set(rifa);
+        this.theme.setPublicColor(rifa.clienteColorPrincipal);
+      },
       error: (error) => this.error.set(error.error?.message || 'No se pudo cargar la rifa.'),
     });
   }
@@ -181,7 +187,10 @@ export class RifaDetalleComponent implements OnDestroy {
   private cargarPorSlug(slug: string): void {
     this.error.set('');
     this.api.detalleRifaPorSlug(slug).subscribe({
-      next: (rifa) => this.rifa.set(rifa),
+      next: (rifa) => {
+        this.rifa.set(rifa);
+        this.theme.setPublicColor(rifa.clienteColorPrincipal);
+      },
       error: (error) => this.error.set(error.error?.message || 'No se pudo cargar la rifa.'),
     });
   }

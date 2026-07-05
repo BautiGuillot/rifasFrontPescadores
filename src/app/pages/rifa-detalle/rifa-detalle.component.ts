@@ -47,6 +47,10 @@ export class RifaDetalleComponent implements OnDestroy {
       .filter((numero): numero is NumeroRifa => !!numero);
   });
 
+  readonly seleccionEtiquetas = computed(() =>
+    this.numerosSeleccionados().map((numero) => numero.etiqueta).join(', '),
+  );
+
   readonly compraConComprobante = computed(() => {
     const compra = this.compra();
     return !!compra?.comprobanteArchivo || !!compra?.comprobanteWhatsapp;

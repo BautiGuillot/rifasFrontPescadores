@@ -20,11 +20,11 @@
   </section>
 
   <section
-    class="detail-layout"
+    class="detail-layout public-raffle-layout"
     [style.--brand-blue-900]="colorPrincipal(rifa)"
     [style.--brand-blue-700]="colorPrincipal(rifa)"
   >
-    <div class="numbers-panel">
+    <div class="numbers-panel public-numbers-panel">
       @if (rifa.premios.length) {
         <div class="public-prizes">
           @for (premio of rifa.premios; track premio.posicion) {
@@ -59,9 +59,13 @@
         <p class="alert">Esta rifa fue cancelada.</p>
       }
 
-      <div class="legend">
+      <div class="raffle-section-title">
+        <h2>Elegí tus números</h2>
+      </div>
+
+      <div class="legend public-legend">
         <span><i class="dot available"></i> Disponible</span>
-        <span><i class="dot pending"></i> Pendiente</span>
+        <span><i class="dot selected"></i> Seleccionado</span>
         <span><i class="dot sold"></i> Ocupado</span>
       </div>
 
@@ -70,7 +74,7 @@
         <span>{{ rifa.cantidadNumeros }} números de sorteo</span>
       </div>
 
-      <div class="number-grid grouped">
+      <div class="number-grid grouped public-number-grid">
         @for (numero of rifa.numeros; track numero.id) {
           <button
             type="button"
@@ -91,7 +95,7 @@
       </div>
     </div>
 
-    <aside class="form-panel">
+    <aside class="form-panel public-checkout-panel">
       @if (rifa.estado !== 'PUBLICADA') {
         <div class="success-panel">
           @if (rifa.estado === 'FINALIZADA') {
@@ -164,45 +168,42 @@
           </div>
         </div>
       } @else {
-        <h2>Tu selección</h2>
-        <div class="selected-list">
-          @for (numero of numerosSeleccionados(); track numero.id) {
-            <span>
-              {{ numero.etiqueta }}
-              @if (numero.numerosIncluidos.length > 1) {
-                - {{ numero.numerosIncluidos.join('-') }}
-              }
-            </span>
-          } @empty {
-            <span class="muted">Sin filas seleccionadas</span>
-          }
-        </div>
+        @if (numerosSeleccionados().length) {
+          <div class="checkout-summary">
+            <span>{{ numerosSeleccionados().length }} {{ numerosSeleccionados().length === 1 ? 'número' : 'números' }}: {{ seleccionEtiquetas() }}</span>
+            <strong>Monto esperado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+          </div>
+        }
 
-        <div class="total-row">
-          <span>Total</span>
-          <strong>{{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
-        </div>
+        <h2>Tus datos</h2>
 
         <form [formGroup]="form" (ngSubmit)="confirmar()">
           <label>
-            Nombre
-            <input type="text" formControlName="nombre" />
+            Nombre y apellido *
+            <input type="text" formControlName="nombre" placeholder="Juan García" />
+            <span class="field-hint">Como figura en tu documento.</span>
           </label>
           <label>
-            DNI
-            <input type="text" formControlName="dni" />
+            DNI *
+            <input type="text" formControlName="dni" placeholder="12345678" />
           </label>
           <label>
-            Teléfono
-            <input type="text" formControlName="telefono" />
+            Teléfono / WhatsApp *
+            <input type="text" formControlName="telefono" placeholder="+542364379198" />
+            <span class="field-hint">Usá código de país y área para que el negocio pueda contactarte.</span>
           </label>
+
+          <div class="payment-note">
+            <strong>Pagá por transferencia bancaria</strong>
+            <span>Al confirmar, te mostramos el alias y las instrucciones para enviar el comprobante.</span>
+          </div>
 
           @if (error()) {
             <p class="alert">{{ error() }}</p>
           }
 
           <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
-            {{ enviando() ? 'Confirmando...' : 'Confirmar compra' }}
+            {{ enviando() ? 'Confirmando...' : 'Confirmar y ver datos de pago' }}
           </button>
         </form>
       }

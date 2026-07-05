@@ -26,19 +26,25 @@
   >
     <div class="numbers-panel public-numbers-panel">
       @if (rifa.premios.length) {
-        <div class="public-prizes">
-          @for (premio of rifa.premios; track premio.posicion) {
-            <article>
-              @if (premio.imagenUrl) {
-                <img [src]="mediaUrl(premio.imagenUrl)" alt="" />
-              }
-              <div>
-                <span>Premio {{ premio.posicion }}</span>
-                <strong>{{ premio.descripcion }}</strong>
-              </div>
-            </article>
-          }
-        </div>
+        <details class="public-prizes-disclosure">
+          <summary>
+            <span>Premios</span>
+            <strong>{{ rifa.premios.length }}</strong>
+          </summary>
+          <div class="public-prizes">
+            @for (premio of rifa.premios; track premio.posicion) {
+              <article>
+                @if (premio.imagenUrl) {
+                  <img [src]="mediaUrl(premio.imagenUrl)" alt="" />
+                }
+                <div>
+                  <span>Premio {{ premio.posicion }}</span>
+                  <strong>{{ premio.descripcion }}</strong>
+                </div>
+              </article>
+            }
+          </div>
+        </details>
       }
 
       @if (rifa.estado === 'FINALIZADA' && rifa.ganadores.length) {
@@ -74,7 +80,7 @@
         <span>{{ rifa.cantidadNumeros }} números de sorteo</span>
       </div>
 
-      <div class="number-grid grouped public-number-grid">
+      <div class="number-grid grouped public-number-grid" [class.has-grouped-rows]="rifa.cantidadFilas !== rifa.cantidadNumeros">
         @for (numero of rifa.numeros; track numero.id) {
           <button
             type="button"
@@ -168,44 +174,46 @@
           </div>
         </div>
       } @else {
-        @if (numerosSeleccionados().length) {
-          <div class="checkout-summary">
-            <span>{{ numerosSeleccionados().length }} {{ numerosSeleccionados().length === 1 ? 'número' : 'números' }}: {{ seleccionEtiquetas() }}</span>
-            <strong>Monto esperado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
-          </div>
-        }
-
-        <h2>Tus datos</h2>
-
-        <form [formGroup]="form" (ngSubmit)="confirmar()">
-          <label>
-            Nombre y apellido *
-            <input type="text" formControlName="nombre" placeholder="Juan García" />
-            <span class="field-hint">Como figura en tu documento.</span>
-          </label>
-          <label>
-            DNI *
-            <input type="text" formControlName="dni" placeholder="12345678" />
-          </label>
-          <label>
-            Teléfono / WhatsApp *
-            <input type="text" formControlName="telefono" placeholder="+542364379198" />
-            <span class="field-hint">Usá código de país y área para que el negocio pueda contactarte.</span>
-          </label>
-
-          <div class="payment-note">
-            <strong>Pagá por transferencia bancaria</strong>
-            <span>Al confirmar, te mostramos el alias y las instrucciones para enviar el comprobante.</span>
-          </div>
-
-          @if (error()) {
-            <p class="alert">{{ error() }}</p>
+        <div class="checkout-card">
+          @if (numerosSeleccionados().length) {
+            <div class="checkout-summary">
+              <span>{{ numerosSeleccionados().length }} {{ numerosSeleccionados().length === 1 ? 'número' : 'números' }}: {{ seleccionEtiquetas() }}</span>
+              <strong>Monto esperado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+            </div>
           }
 
-          <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
-            {{ enviando() ? 'Confirmando...' : 'Confirmar y ver datos de pago' }}
-          </button>
-        </form>
+          <h2>Tus datos</h2>
+
+          <form [formGroup]="form" (ngSubmit)="confirmar()">
+            <label>
+              Nombre y apellido *
+              <input type="text" formControlName="nombre" placeholder="Juan García" />
+              <span class="field-hint">Como figura en tu documento.</span>
+            </label>
+            <label>
+              DNI *
+              <input type="text" formControlName="dni" placeholder="12345678" />
+            </label>
+            <label>
+              Teléfono / WhatsApp *
+              <input type="text" formControlName="telefono" placeholder="+542364379198" />
+              <span class="field-hint">Usá código de país y área para que el negocio pueda contactarte.</span>
+            </label>
+
+            <div class="payment-note">
+              <strong>Pagá por transferencia bancaria</strong>
+              <span>Al confirmar, te mostramos el alias y las instrucciones para enviar el comprobante.</span>
+            </div>
+
+            @if (error()) {
+              <p class="alert">{{ error() }}</p>
+            }
+
+            <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
+              {{ enviando() ? 'Confirmando...' : 'Confirmar y ver datos de pago' }}
+            </button>
+          </form>
+        </div>
       }
     </aside>
   </section>

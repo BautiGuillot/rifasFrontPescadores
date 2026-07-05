@@ -677,6 +677,11 @@ textarea {
   font-size: 1rem;
 }
 
+.checkout-card {
+  display: grid;
+  gap: 18px;
+}
+
 .total-row {
   display: flex;
   align-items: center;
@@ -860,7 +865,53 @@ td span {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
+  margin-top: 12px;
+}
+
+.public-prizes-disclosure {
+  margin-bottom: 18px;
+  border: 1px solid #d7e1e8;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.public-prizes-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: #0f172a;
+  font-weight: 900;
+  list-style: none;
+  cursor: pointer;
+}
+
+.public-prizes-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.public-prizes-disclosure summary::after {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-blue-900) 10%, #ffffff);
+  color: var(--brand-blue-900);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.public-prizes-disclosure[open] summary::after {
+  content: "-";
+}
+
+.public-prizes-disclosure summary strong {
+  margin-left: auto;
+  margin-right: 10px;
+  color: var(--brand-blue-900);
 }
 
 .public-prizes article {
@@ -1103,10 +1154,16 @@ td span {
   }
 
   .public-prizes {
-    margin-bottom: 22px;
+    margin: 0;
+    padding: 0 12px 12px;
   }
 
   .public-prizes article {
+    border-radius: 12px;
+  }
+
+  .public-prizes-disclosure {
+    margin-bottom: 24px;
     border-radius: 12px;
   }
 
@@ -1173,19 +1230,41 @@ td span {
   }
 
   .public-number-grid .grouped-cell span {
-    overflow: hidden;
     max-width: 100%;
     font-size: 0.58rem;
     line-height: 1.05;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+  }
+
+  .public-number-grid.has-grouped-rows {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+
+  .public-number-grid.has-grouped-rows .number-cell {
+    min-height: 58px;
+    padding: 6px 4px;
+  }
+
+  .public-number-grid.has-grouped-rows .grouped-cell span {
+    font-size: 0.72rem;
+    font-weight: 900;
+    line-height: 1.1;
   }
 
   .checkout-summary {
-    margin-top: 18px;
     border-radius: 14px;
     padding: 16px;
     font-size: 1rem;
+  }
+
+  .checkout-card {
+    margin-top: 22px;
+    border: 1px solid #d7e1e8;
+    border-radius: 16px;
+    padding: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
   }
 
   .public-checkout-panel form {

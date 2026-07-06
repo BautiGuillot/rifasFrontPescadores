@@ -1,7 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Compra, RifaDetalle } from '../../core/api.models';
+import { Compra, EstadoCompra, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
 
 @Component({
@@ -16,8 +16,13 @@ export class AdminRifaDetalleComponent {
 
   readonly rifa = signal<RifaDetalle | null>(null);
   readonly compras = signal<Compra[]>([]);
+  readonly compraFiltro = signal<EstadoCompra | ''>('PENDIENTE_PAGO');
   readonly mensaje = signal('');
   readonly error = signal('');
+  readonly comprasFiltradas = computed(() => {
+    const filtro = this.compraFiltro();
+    return filtro ? this.compras().filter((compra) => compra.estado === filtro) : this.compras();
+  });
   readonly comprasPendientes = computed(() =>
     this.compras().filter((compra) => compra.estado === 'PENDIENTE_PAGO').length,
   );
@@ -50,6 +55,10 @@ export class AdminRifaDetalleComponent {
 
   mediaUrl(url?: string | null): string {
     return this.api.mediaUrl(url);
+  }
+
+  cambiarFiltroCompras(estado: EstadoCompra | ''): void {
+    this.compraFiltro.set(estado);
   }
 
   aprobarCompra(id: number): void {

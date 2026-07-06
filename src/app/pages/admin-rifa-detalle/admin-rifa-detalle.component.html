@@ -166,7 +166,26 @@
     </section>
 
     <section class="table-panel raffle-detail-panel admin-purchases-panel">
-      <h2>Compras de esta rifa</h2>
+      <div class="panel-title-row">
+        <div>
+          <h2>Compras de esta rifa</h2>
+          <span class="muted">{{ comprasFiltradas().length }} compras en el filtro seleccionado</span>
+        </div>
+        <div class="toolbar table-toolbar">
+          <button type="button" [class.active]="compraFiltro() === 'PENDIENTE_PAGO'" (click)="cambiarFiltroCompras('PENDIENTE_PAGO')">
+            Pendientes
+          </button>
+          <button type="button" [class.active]="compraFiltro() === 'APROBADA'" (click)="cambiarFiltroCompras('APROBADA')">
+            Aprobadas
+          </button>
+          <button type="button" [class.active]="compraFiltro() === 'CANCELADA'" (click)="cambiarFiltroCompras('CANCELADA')">
+            Canceladas
+          </button>
+          <button type="button" [class.active]="compraFiltro() === ''" (click)="cambiarFiltroCompras('')">
+            Todas
+          </button>
+        </div>
+      </div>
       <table>
         <thead>
           <tr>
@@ -179,7 +198,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (compra of compras(); track compra.id) {
+          @for (compra of comprasFiltradas(); track compra.id) {
             <tr>
               <td><strong>{{ compra.nombre }}</strong><span>DNI {{ compra.dni }} · {{ compra.telefono }}</span></td>
               <td>{{ compra.numeros.join(', ') }}</td>
@@ -204,7 +223,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="6">No hay compras para esta rifa.</td></tr>
+            <tr><td colspan="6">No hay compras para el filtro seleccionado.</td></tr>
           }
         </tbody>
       </table>

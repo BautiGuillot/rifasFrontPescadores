@@ -90,6 +90,13 @@
           </details>
         }
 
+        @if (detalle.aclaracionSorteo) {
+          <div class="raffle-draw-note">
+            <strong>Cómo se sortea</strong>
+            <p>{{ detalle.aclaracionSorteo }}</p>
+          </div>
+        }
+
         @if (detalle.estado === 'FINALIZADA' && detalle.ganadores.length) {
           <div class="public-winners admin-public-winners">
             <h2>Ganadores</h2>

@@ -36,6 +36,7 @@ export interface RifaResumen {
   clienteColorPrincipal?: string;
   clienteLogoUrl?: string;
   descripcion: string;
+  aclaracionSorteo?: string;
   cantidadNumeros: number;
   cantidadFilas: number;
   cantidadGanadores: number;
@@ -57,6 +58,7 @@ export interface CrearRifaRequest {
   titulo: string;
   slug: string;
   descripcion: string;
+  aclaracionSorteo?: string;
   cantidadNumeros: number;
   cantidadFilas: number;
   cantidadGanadores: number;

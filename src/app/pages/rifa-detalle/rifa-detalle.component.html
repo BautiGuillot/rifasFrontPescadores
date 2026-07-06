@@ -47,6 +47,13 @@
         </details>
       }
 
+      @if (rifa.aclaracionSorteo) {
+        <div class="raffle-draw-note">
+          <strong>Cómo se sortea</strong>
+          <p>{{ rifa.aclaracionSorteo }}</p>
+        </div>
+      }
+
       @if (rifa.estado === 'FINALIZADA' && rifa.ganadores.length) {
         <div class="public-winners">
           <h2>Ganadores</h2>

@@ -467,11 +467,38 @@ dd {
   color: #7b8da3;
 }
 
+.public-number-grid .number-cell.sold {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
 .public-number-grid .number-cell.selected {
   background: var(--brand-blue-900);
   border-color: var(--brand-blue-900);
   color: #ffffff;
   outline: none;
+}
+
+.raffle-draw-note {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+  border: 1px solid color-mix(in srgb, var(--brand-blue-900) 24%, #d7e1e8);
+  border-radius: 10px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--brand-blue-900) 7%, #ffffff);
+}
+
+.raffle-draw-note strong {
+  color: color-mix(in srgb, var(--brand-blue-900) 82%, #0f172a);
+}
+
+.raffle-draw-note p {
+  margin: 0;
+  color: #475569;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .form-panel {

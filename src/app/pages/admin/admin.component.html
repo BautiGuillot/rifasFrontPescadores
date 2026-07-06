@@ -154,6 +154,15 @@
             <span class="field-hint">Se usa para el link público. Si escribís espacios se convierten en guiones.</span>
           </label>
           <label>Descripción <textarea rows="3" formControlName="descripcion"></textarea></label>
+          <label>
+            Aclaración del sorteo
+            <textarea
+              rows="3"
+              formControlName="aclaracionSorteo"
+              placeholder="Ej: Se sortea cuando se vendan todos los números. El ganador se define por Quiniela Nacional Nocturna."
+            ></textarea>
+            <span class="field-hint">Explicá cómo y cuándo se realizará el sorteo para que el comprador lo vea en la rifa.</span>
+          </label>
           <div class="form-grid">
             <label>Números sorteo <input type="number" formControlName="cantidadNumeros" /></label>
             <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>

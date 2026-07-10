@@ -41,6 +41,12 @@ export interface RifaResumen {
   cantidadFilas: number;
   cantidadGanadores: number;
   valorNumero: number;
+  aliasCobroId?: number;
+  aliasCobroNombre?: string;
+  aliasCobroEntidad?: string;
+  aliasCobroTitular?: string;
+  aliasCobroCbuCvu?: string;
+  aliasTransferencia?: string;
   estado: EstadoRifa;
   fechaCreacion: string;
   fechaSorteo?: string;
@@ -63,7 +69,8 @@ export interface CrearRifaRequest {
   cantidadFilas: number;
   cantidadGanadores: number;
   valorNumero: number;
-  aliasTransferencia: string;
+  aliasCobroId?: number;
+  aliasTransferencia?: string;
   whatsappComprobante: string;
   premios: Premio[];
 }
@@ -86,6 +93,11 @@ export interface Compra {
   whatsappAutomaticoEstado?: 'NO_CONFIGURADO' | 'ENVIADO' | 'ERROR';
   whatsappAutomaticoError?: string;
   fechaWhatsappAutomatico?: string;
+  aliasCobroId?: number;
+  aliasCobroNombre?: string;
+  aliasCobroEntidad?: string;
+  aliasCobroTitular?: string;
+  aliasCobroCbuCvu?: string;
   aliasTransferencia: string;
   whatsappComprobante: string;
 }
@@ -149,4 +161,46 @@ export interface MediaResponse {
   referencia: string;
   nombreOriginal: string;
   contentType: string;
+}
+
+export interface AliasCobro {
+  id: number;
+  nombre: string;
+  alias: string;
+  entidad?: string;
+  titular?: string;
+  cbuCvu?: string;
+  activo: boolean;
+  fechaCreacion: string;
+  rifasAsociadas: number;
+  comprasAprobadas: number;
+  recaudacionAprobada: number;
+}
+
+export interface AliasCobroRifa {
+  id: number;
+  titulo: string;
+  slug: string;
+  estado: EstadoRifa;
+  valorNumero: number;
+  fechaCreacion: string;
+  fechaSorteo?: string;
+  comprasPendientes: number;
+  comprasAprobadas: number;
+  comprasCanceladas: number;
+  recaudacionAprobada: number;
+}
+
+export interface AliasCobroDetalle {
+  alias: AliasCobro;
+  rifas: AliasCobroRifa[];
+}
+
+export interface AliasCobroRequest {
+  nombre: string;
+  alias: string;
+  entidad?: string;
+  titular?: string;
+  cbuCvu?: string;
+  activo?: boolean;
 }

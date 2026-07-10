@@ -110,6 +110,9 @@
     <button type="button" [class.active]="tab() === 'compras'" (click)="cambiarTab('compras')">
       Compras
     </button>
+    <button type="button" [class.active]="tab() === 'alias'" (click)="cambiarTab('alias')">
+      Alias
+    </button>
     <button type="button" [class.active]="tab() === 'marca'" (click)="cambiarTab('marca')">
       Marca
     </button>
@@ -179,7 +182,20 @@
             <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
             <label>Valor <input type="number" formControlName="valorNumero" /></label>
           </div>
-          <label>Alias <input type="text" formControlName="aliasTransferencia" /></label>
+          <label>
+            Alias de cobro
+            <select formControlName="aliasCobroId">
+              <option [value]="0">Seleccionar alias</option>
+              @for (alias of aliasesActivos(); track alias.id) {
+                <option [value]="alias.id">{{ alias.nombre }} · {{ alias.alias }}</option>
+              }
+            </select>
+            @if (!aliasesActivos().length) {
+              <span class="field-hint">Primero creá un alias en la sección Alias.</span>
+            } @else if (aliasSeleccionado(); as alias) {
+              <span class="field-hint">{{ alias.entidad || 'Cuenta de cobro' }} · {{ alias.alias }}</span>
+            }
+          </label>
           <label>WhatsApp <input type="text" formControlName="whatsappComprobante" /></label>
 
           <div class="nested-list" formArrayName="premios">
@@ -224,6 +240,7 @@
                 <td>
                   <strong>{{ rifa.titulo }}</strong>
                   <span>{{ rifa.cantidadNumeros }} números en {{ rifa.cantidadFilas }} filas</span>
+                  <span>Alias: {{ aliasRifa(rifa) }}</span>
                   <span>Creada: {{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</span>
                   <span>Link: /r/{{ rifa.slug }}</span>
                 </td>
@@ -314,6 +331,144 @@
         </tbody>
       </table>
     </div>
+  }
+
+  @if (tab() === 'alias') {
+    <div class="split-layout">
+      <form class="form-panel" [formGroup]="aliasForm" (ngSubmit)="guardarAlias()">
+        <div class="panel-title-row">
+          <h2>{{ editandoAliasId() ? 'Editar alias' : 'Nuevo alias' }}</h2>
+          @if (editandoAliasId()) {
+            <button type="button" class="small-button" (click)="cancelarEdicionAlias()">Cancelar edición</button>
+          }
+        </div>
+        <label>Nombre <input type="text" formControlName="nombre" placeholder="Mercado Pago principal" /></label>
+        <label>Alias <input type="text" formControlName="alias" placeholder="mi.negocio.mp" /></label>
+        <label>Banco o billetera <input type="text" formControlName="entidad" placeholder="Mercado Pago, Banco Nación..." /></label>
+        <label>Titular <input type="text" formControlName="titular" /></label>
+        <label>CBU/CVU <input type="text" formControlName="cbuCvu" /></label>
+        <label class="checkbox-row">
+          <input type="checkbox" formControlName="activo" />
+          Alias activo
+        </label>
+        <button class="primary-action" type="submit">
+          {{ editandoAliasId() ? 'Guardar cambios' : 'Crear alias' }}
+        </button>
+      </form>
+
+      <div class="table-panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Alias</th>
+              <th>Datos</th>
+              <th>Rifas</th>
+              <th>Compras aprobadas</th>
+              <th>Recaudación</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (alias of aliases(); track alias.id) {
+              <tr>
+                <td><strong>{{ alias.nombre }}</strong><span>{{ alias.alias }}</span></td>
+                <td>
+                  <span>{{ alias.entidad || 'Sin entidad' }}</span>
+                  <span>{{ alias.titular || 'Sin titular' }}</span>
+                  @if (alias.cbuCvu) {
+                    <span>{{ alias.cbuCvu }}</span>
+                  }
+                </td>
+                <td>{{ alias.rifasAsociadas }}</td>
+                <td>{{ alias.comprasAprobadas }}</td>
+                <td>{{ alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+                <td><span class="status">{{ alias.activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
+                <td class="actions">
+                  <button type="button" (click)="verAlias(alias)">Ver</button>
+                  <button type="button" (click)="editarAlias(alias)">Editar</button>
+                  <button type="button" (click)="cambiarEstadoAlias(alias)">
+                    {{ alias.activo ? 'Inactivar' : 'Activar' }}
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7">No hay alias creados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    @if (cargandoAliasDetalle()) {
+      <div class="modal-backdrop">
+        <div class="form-panel modal-panel">
+          <p class="muted">Cargando resumen del alias...</p>
+        </div>
+      </div>
+    }
+
+    @if (aliasDetalle(); as detalle) {
+      <div class="modal-backdrop">
+        <section class="form-panel modal-panel alias-detail-modal">
+          <div class="panel-title-row">
+            <div>
+              <h2>{{ detalle.alias.nombre }}</h2>
+              <span class="muted">{{ detalle.alias.alias }}</span>
+            </div>
+            <button type="button" class="small-button" (click)="cerrarDetalleAlias()">Cerrar</button>
+          </div>
+
+          <div class="metric-grid compact-metric-grid">
+            <div class="metric">
+              <span>Rifas asignadas</span>
+              <strong>{{ detalle.alias.rifasAsociadas }}</strong>
+            </div>
+            <div class="metric">
+              <span>Compras aprobadas</span>
+              <strong>{{ detalle.alias.comprasAprobadas }}</strong>
+            </div>
+            <div class="metric">
+              <span>Recaudación aprobada</span>
+              <strong>{{ detalle.alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+            </div>
+          </div>
+
+          <div class="table-panel">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rifa</th>
+                  <th>Estado</th>
+                  <th>Compras</th>
+                  <th>Recaudación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rifa of detalle.rifas; track rifa.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ rifa.titulo }}</strong>
+                      <span>Link: /r/{{ rifa.slug }}</span>
+                      <span>Creada: {{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</span>
+                    </td>
+                    <td><span class="status">{{ rifa.estado }}</span></td>
+                    <td>
+                      <span>Aprobadas: {{ rifa.comprasAprobadas }}</span>
+                      <span>Pendientes: {{ rifa.comprasPendientes }}</span>
+                      <span>Canceladas: {{ rifa.comprasCanceladas }}</span>
+                    </td>
+                    <td>{{ rifa.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4">Este alias todavía no tiene rifas asignadas.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    }
   }
 
   @if (tab() === 'marca') {

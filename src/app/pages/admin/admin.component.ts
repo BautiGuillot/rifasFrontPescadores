@@ -2,11 +2,11 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
+import { AliasCobro, AliasCobroDetalle, Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
 
-type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'marca';
+type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'alias' | 'marca';
 
 @Component({
   selector: 'app-admin',
@@ -21,6 +21,9 @@ export class AdminComponent {
   readonly dashboard = signal<DashboardAdmin | null>(null);
   readonly rifas = signal<RifaResumen[]>([]);
   readonly compras = signal<Compra[]>([]);
+  readonly aliases = signal<AliasCobro[]>([]);
+  readonly aliasDetalle = signal<AliasCobroDetalle | null>(null);
+  readonly cargandoAliasDetalle = signal(false);
   readonly clientes = signal<Cliente[]>([]);
   readonly miMarca = signal<Cliente | null>(null);
   readonly modalRifaAbierto = signal(false);
@@ -34,6 +37,7 @@ export class AdminComponent {
   readonly subiendoPremio = signal<number | null>(null);
   readonly editandoRifaId = signal<number | null>(null);
   readonly editandoClienteId = signal<number | null>(null);
+  readonly editandoAliasId = signal<number | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     titulo: ['', Validators.required],
@@ -44,7 +48,8 @@ export class AdminComponent {
     cantidadFilas: [100, [Validators.required, Validators.min(1)]],
     cantidadGanadores: [1, [Validators.required, Validators.min(1)]],
     valorNumero: [1000, [Validators.required, Validators.min(1)]],
-    aliasTransferencia: ['', Validators.required],
+    aliasCobroId: [0, [Validators.required, Validators.min(1)]],
+    aliasTransferencia: [''],
     whatsappComprobante: ['', [Validators.required, Validators.pattern(/^\+?[1-9][0-9]{7,14}$/)]],
     premios: this.fb.array([this.crearPremio(1)]),
   });
@@ -73,9 +78,25 @@ export class AdminComponent {
     whatsappConsultas: [''],
   });
 
+  readonly aliasForm = this.fb.nonNullable.group({
+    nombre: ['', Validators.required],
+    alias: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9._-]{3,64}$/)]],
+    entidad: [''],
+    titular: [''],
+    cbuCvu: [''],
+    activo: [true],
+  });
+
   readonly rifasFiltradas = computed(() => {
     const filtro = this.rifaFiltro();
     return filtro ? this.rifas().filter((rifa) => rifa.estado === filtro) : this.rifas();
+  });
+
+  readonly aliasesActivos = computed(() => this.aliases().filter((alias) => alias.activo));
+
+  readonly aliasSeleccionado = computed(() => {
+    const id = Number(this.form.controls.aliasCobroId.value);
+    return this.aliases().find((alias) => alias.id === id) || null;
   });
 
   constructor() {
@@ -192,6 +213,27 @@ export class AdminComponent {
     this.rifaFiltro.set(estado);
   }
 
+  aliasRifa(rifa: RifaResumen): string {
+    if (rifa.aliasCobroNombre && rifa.aliasTransferencia) {
+      return `${rifa.aliasCobroNombre} · ${rifa.aliasTransferencia}`;
+    }
+    if (rifa.aliasCobroNombre) {
+      return rifa.aliasCobroNombre;
+    }
+    const aliasPorId = rifa.aliasCobroId
+      ? this.aliases().find((alias) => alias.id === rifa.aliasCobroId)
+      : null;
+    if (aliasPorId) {
+      return `${aliasPorId.nombre} · ${aliasPorId.alias}`;
+    }
+    const aliasTexto = rifa.aliasTransferencia?.trim();
+    if (aliasTexto) {
+      const aliasPorTexto = this.aliases().find((alias) => alias.alias.toLowerCase() === aliasTexto.toLowerCase());
+      return aliasPorTexto ? `${aliasPorTexto.nombre} · ${aliasPorTexto.alias}` : aliasTexto;
+    }
+    return 'Sin alias asignado';
+  }
+
   guardarRifa(): void {
     this.form.controls.slug.setValue(this.normalizarSlug(this.form.controls.slug.value));
     if (this.form.invalid) {
@@ -200,8 +242,18 @@ export class AdminComponent {
       return;
     }
     const raw = this.form.getRawValue();
+    const alias = this.aliasSeleccionado();
+    if (!alias) {
+      this.error.set('Tenes que seleccionar un alias de cobro activo.');
+      return;
+    }
+    const payload = {
+      ...raw,
+      aliasCobroId: Number(raw.aliasCobroId),
+      aliasTransferencia: alias.alias,
+    };
     const editandoId = this.editandoRifaId();
-    const request = editandoId ? this.api.editarRifa(editandoId, raw) : this.api.crearRifa(raw);
+    const request = editandoId ? this.api.editarRifa(editandoId, payload) : this.api.crearRifa(payload);
     request.subscribe({
       next: () => {
         this.mensaje.set(editandoId ? 'Rifa actualizada correctamente.' : 'Rifa creada correctamente.');
@@ -233,6 +285,7 @@ export class AdminComponent {
           cantidadFilas: detalle.cantidadFilas,
           cantidadGanadores: detalle.cantidadGanadores,
           valorNumero: detalle.valorNumero,
+          aliasCobroId: detalle.aliasCobroId || 0,
           aliasTransferencia: detalle.aliasTransferencia,
           whatsappComprobante: detalle.whatsappComprobante,
         });
@@ -322,6 +375,88 @@ export class AdminComponent {
     this.api.listarCompras(estado || undefined).subscribe({
       next: (compras) => this.compras.set(compras),
       error: () => this.error.set('No se pudieron cargar las compras.'),
+    });
+  }
+
+  guardarAlias(): void {
+    if (this.aliasForm.invalid) {
+      this.aliasForm.markAllAsTouched();
+      return;
+    }
+    const raw = this.aliasForm.getRawValue();
+    const payload = {
+      nombre: raw.nombre,
+      alias: raw.alias,
+      entidad: raw.entidad || undefined,
+      titular: raw.titular || undefined,
+      cbuCvu: raw.cbuCvu || undefined,
+      activo: raw.activo,
+    };
+    const editandoId = this.editandoAliasId();
+    const request = editandoId
+      ? this.api.actualizarAliasCobro(editandoId, payload)
+      : this.api.crearAliasCobro(payload);
+    request.subscribe({
+      next: () => {
+        this.mensaje.set(editandoId ? 'Alias actualizado.' : 'Alias creado.');
+        this.error.set('');
+        this.limpiarFormularioAlias();
+        this.cargarAliases();
+      },
+      error: (error) => this.error.set(error.error?.message || 'No se pudo guardar el alias.'),
+    });
+  }
+
+  editarAlias(alias: AliasCobro): void {
+    this.editandoAliasId.set(alias.id);
+    this.aliasForm.reset({
+      nombre: alias.nombre,
+      alias: alias.alias,
+      entidad: alias.entidad || '',
+      titular: alias.titular || '',
+      cbuCvu: alias.cbuCvu || '',
+      activo: alias.activo,
+    });
+    this.mensaje.set('');
+    this.error.set('');
+  }
+
+  cancelarEdicionAlias(): void {
+    this.limpiarFormularioAlias();
+  }
+
+  verAlias(alias: AliasCobro): void {
+    this.cargandoAliasDetalle.set(true);
+    this.aliasDetalle.set(null);
+    this.api.detalleAliasCobro(alias.id).subscribe({
+      next: (detalle) => {
+        this.aliasDetalle.set(detalle);
+        this.cargandoAliasDetalle.set(false);
+        this.error.set('');
+      },
+      error: (error) => {
+        this.error.set(error.error?.message || 'No se pudo cargar el resumen del alias.');
+        this.cargandoAliasDetalle.set(false);
+      },
+    });
+  }
+
+  cerrarDetalleAlias(): void {
+    this.aliasDetalle.set(null);
+    this.cargandoAliasDetalle.set(false);
+  }
+
+  cambiarEstadoAlias(alias: AliasCobro): void {
+    const activo = !alias.activo;
+    if (!confirm(`${activo ? 'Activar' : 'Inactivar'} este alias?`)) {
+      return;
+    }
+    this.api.actualizarEstadoAliasCobro(alias.id, activo).subscribe({
+      next: () => {
+        this.mensaje.set(activo ? 'Alias activado.' : 'Alias inactivado.');
+        this.cargarAliases();
+      },
+      error: (error) => this.error.set(error.error?.message || 'No se pudo actualizar el alias.'),
     });
   }
 
@@ -437,8 +572,16 @@ export class AdminComponent {
   private cargarTodo(): void {
     this.api.dashboard().subscribe((dashboard) => this.dashboard.set(dashboard));
     this.api.listarAdminRifas().subscribe((rifas) => this.rifas.set(rifas));
+    this.cargarAliases();
     this.cargarMiMarca();
     this.cargarCompras(this.compraFiltro());
+  }
+
+  private cargarAliases(): void {
+    this.api.listarAliasCobro().subscribe({
+      next: (aliases) => this.aliases.set(aliases),
+      error: () => this.error.set('No se pudieron cargar los alias.'),
+    });
   }
 
   private cargarMiMarca(): void {
@@ -522,6 +665,7 @@ export class AdminComponent {
       cantidadFilas: 100,
       cantidadGanadores: 1,
       valorNumero: 1000,
+      aliasCobroId: this.aliasesActivos()[0]?.id || 0,
       aliasTransferencia: '',
       whatsappComprobante: '',
     });
@@ -545,6 +689,18 @@ export class AdminComponent {
       posicion: [posicion, Validators.required],
       descripcion: ['', Validators.required],
       imagenUrl: [''],
+    });
+  }
+
+  private limpiarFormularioAlias(): void {
+    this.editandoAliasId.set(null);
+    this.aliasForm.reset({
+      nombre: '',
+      alias: '',
+      entidad: '',
+      titular: '',
+      cbuCvu: '',
+      activo: true,
     });
   }
 

@@ -2,6 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {
+  AliasCobro,
+  AliasCobroDetalle,
+  AliasCobroRequest,
   Compra,
   Cliente,
   CrearClienteRequest,
@@ -177,6 +180,26 @@ export class RifasApiService {
     const formData = new FormData();
     formData.append('archivo', archivo);
     return this.http.post<MediaResponse>(`${this.baseUrl}/admin/media/premios`, formData);
+  }
+
+  listarAliasCobro(soloActivos = false) {
+    return this.http.get<AliasCobro[]>(`${this.baseUrl}/admin/alias-cobro?soloActivos=${soloActivos}`);
+  }
+
+  detalleAliasCobro(id: number) {
+    return this.http.get<AliasCobroDetalle>(`${this.baseUrl}/admin/alias-cobro/${id}`);
+  }
+
+  crearAliasCobro(request: AliasCobroRequest) {
+    return this.http.post<AliasCobro>(`${this.baseUrl}/admin/alias-cobro`, request);
+  }
+
+  actualizarAliasCobro(id: number, request: AliasCobroRequest) {
+    return this.http.put<AliasCobro>(`${this.baseUrl}/admin/alias-cobro/${id}`, request);
+  }
+
+  actualizarEstadoAliasCobro(id: number, activo: boolean) {
+    return this.http.patch<AliasCobro>(`${this.baseUrl}/admin/alias-cobro/${id}/estado`, { activo });
   }
 
   private apiOrigin(): string {

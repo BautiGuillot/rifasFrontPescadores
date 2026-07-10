@@ -535,6 +535,10 @@ dd {
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
 }
 
+.alias-detail-modal {
+  width: min(980px, 100%);
+}
+
 .panel-title-row {
   display: flex;
   align-items: center;
@@ -878,6 +882,16 @@ td span {
 .metric strong {
   color: #111827;
   font-size: 1.75rem;
+}
+
+.alias-metric strong {
+  overflow-wrap: anywhere;
+  font-size: 1.05rem;
+}
+
+.alias-metric small {
+  color: #64727d;
+  font-weight: 800;
 }
 
 .metric.wide {

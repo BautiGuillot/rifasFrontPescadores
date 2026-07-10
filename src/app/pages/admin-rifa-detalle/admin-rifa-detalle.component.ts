@@ -57,6 +57,13 @@ export class AdminRifaDetalleComponent {
     return this.api.mediaUrl(url);
   }
 
+  aliasRifa(rifa: RifaDetalle): string {
+    if (rifa.aliasCobroNombre && rifa.aliasTransferencia) {
+      return `${rifa.aliasCobroNombre} · ${rifa.aliasTransferencia}`;
+    }
+    return rifa.aliasTransferencia || rifa.aliasCobroNombre || 'Sin alias';
+  }
+
   cambiarFiltroCompras(estado: EstadoCompra | ''): void {
     this.compraFiltro.set(estado);
   }

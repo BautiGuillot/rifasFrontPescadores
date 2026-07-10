@@ -65,6 +65,13 @@
           <div class="metric"><span>Estado</span><strong>{{ detalle.estado }}</strong></div>
           <div class="metric"><span>Números</span><strong>{{ detalle.cantidadNumeros }}</strong></div>
           <div class="metric"><span>Filas</span><strong>{{ detalle.cantidadFilas }}</strong></div>
+          <div class="metric alias-metric">
+            <span>Alias</span>
+            <strong>{{ aliasRifa(detalle) }}</strong>
+            @if (detalle.aliasCobroEntidad) {
+              <small>{{ detalle.aliasCobroEntidad }}</small>
+            }
+          </div>
           <div class="metric"><span>Creada</span><strong>{{ detalle.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</strong></div>
         </div>
 

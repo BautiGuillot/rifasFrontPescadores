@@ -155,7 +155,15 @@ export class RifasApiService {
     return this.http.get<Cliente>(`${this.baseUrl}/admin/cliente/marca`);
   }
 
-  actualizarMiMarca(request: { colorPrincipal: string; logoUrl?: string }) {
+  actualizarMiMarca(request: {
+    colorPrincipal: string;
+    logoUrl?: string;
+    twilioWhatsappHabilitado?: boolean;
+    twilioWhatsappFrom?: string;
+    twilioMessagingServiceSid?: string;
+    twilioContentSid?: string;
+    whatsappConsultas?: string;
+  }) {
     return this.http.put<Cliente>(`${this.baseUrl}/admin/cliente/marca`, request);
   }
 

@@ -82,6 +82,10 @@ export interface Compra {
   fechaExpiracion: string;
   comprobanteArchivo?: string;
   comprobanteWhatsapp: boolean;
+  twilioMensajeSid?: string;
+  whatsappAutomaticoEstado?: 'NO_CONFIGURADO' | 'ENVIADO' | 'ERROR';
+  whatsappAutomaticoError?: string;
+  fechaWhatsappAutomatico?: string;
   aliasTransferencia: string;
   whatsappComprobante: string;
 }
@@ -116,6 +120,11 @@ export interface Cliente {
   slug: string;
   colorPrincipal: string;
   logoUrl?: string;
+  twilioWhatsappHabilitado: boolean;
+  twilioWhatsappFrom?: string;
+  twilioMessagingServiceSid?: string;
+  twilioContentSid?: string;
+  whatsappConsultas?: string;
   estado: EstadoCliente;
   username: string;
   fechaAlta: string;
@@ -126,6 +135,11 @@ export interface CrearClienteRequest {
   slug: string;
   colorPrincipal?: string;
   logoUrl?: string;
+  twilioWhatsappHabilitado?: boolean;
+  twilioWhatsappFrom?: string;
+  twilioMessagingServiceSid?: string;
+  twilioContentSid?: string;
+  whatsappConsultas?: string;
   username: string;
   password?: string;
 }

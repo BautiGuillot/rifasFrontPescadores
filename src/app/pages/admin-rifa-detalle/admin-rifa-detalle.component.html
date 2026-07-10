@@ -211,6 +211,11 @@
                 } @else {
                   <span class="muted">Sin comprobante</span>
                 }
+                @if (compra.whatsappAutomaticoEstado === 'ENVIADO') {
+                  <span class="muted">Automático enviado</span>
+                } @else if (compra.whatsappAutomaticoEstado === 'ERROR') {
+                  <span class="alert compact-alert">Falló automático</span>
+                }
               </td>
               <td>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
               <td><span class="status">{{ compra.estado }}</span></td>

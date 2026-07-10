@@ -54,6 +54,11 @@ export class AdminComponent {
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]{3,80}$/)]],
     colorPrincipal: ['#082d50', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],
     logoUrl: [''],
+    twilioWhatsappHabilitado: [false],
+    twilioWhatsappFrom: [''],
+    twilioMessagingServiceSid: [''],
+    twilioContentSid: [''],
+    whatsappConsultas: [''],
     username: ['', Validators.required],
     password: [''],
   });
@@ -61,6 +66,11 @@ export class AdminComponent {
   readonly marcaForm = this.fb.nonNullable.group({
     colorPrincipal: ['#082d50', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],
     logoUrl: [''],
+    twilioWhatsappHabilitado: [false],
+    twilioWhatsappFrom: [''],
+    twilioMessagingServiceSid: [''],
+    twilioContentSid: [''],
+    whatsappConsultas: [''],
   });
 
   readonly rifasFiltradas = computed(() => {
@@ -89,6 +99,11 @@ export class AdminComponent {
     this.api.actualizarMiMarca({
       colorPrincipal: raw.colorPrincipal,
       logoUrl: raw.logoUrl || undefined,
+      twilioWhatsappHabilitado: raw.twilioWhatsappHabilitado,
+      twilioWhatsappFrom: raw.twilioWhatsappFrom || undefined,
+      twilioMessagingServiceSid: raw.twilioMessagingServiceSid || undefined,
+      twilioContentSid: raw.twilioContentSid || undefined,
+      whatsappConsultas: raw.whatsappConsultas || undefined,
     }).subscribe({
       next: (cliente) => {
         this.miMarca.set(cliente);
@@ -96,6 +111,11 @@ export class AdminComponent {
         this.marcaForm.reset({
           colorPrincipal: cliente.colorPrincipal || '#082d50',
           logoUrl: cliente.logoUrl || '',
+          twilioWhatsappHabilitado: cliente.twilioWhatsappHabilitado || false,
+          twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
+          twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
+          twilioContentSid: cliente.twilioContentSid || '',
+          whatsappConsultas: cliente.whatsappConsultas || '',
         });
         this.mensaje.set('Marca actualizada.');
         this.error.set('');
@@ -362,6 +382,11 @@ export class AdminComponent {
       slug: cliente.slug,
       colorPrincipal: cliente.colorPrincipal || '#082d50',
       logoUrl: cliente.logoUrl || '',
+      twilioWhatsappHabilitado: cliente.twilioWhatsappHabilitado || false,
+      twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
+      twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
+      twilioContentSid: cliente.twilioContentSid || '',
+      whatsappConsultas: cliente.whatsappConsultas || '',
       username: cliente.username,
       password: '',
     });
@@ -424,6 +449,11 @@ export class AdminComponent {
         this.marcaForm.reset({
           colorPrincipal: cliente.colorPrincipal || '#082d50',
           logoUrl: cliente.logoUrl || '',
+          twilioWhatsappHabilitado: cliente.twilioWhatsappHabilitado || false,
+          twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
+          twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
+          twilioContentSid: cliente.twilioContentSid || '',
+          whatsappConsultas: cliente.whatsappConsultas || '',
         });
       },
       error: () => this.error.set('No se pudo cargar la marca.'),
@@ -440,7 +470,19 @@ export class AdminComponent {
   private limpiarFormularioCliente(): void {
     this.editandoClienteId.set(null);
     this.logoClienteArchivo.set(null);
-    this.clienteForm.reset({ nombre: '', slug: '', colorPrincipal: '#082d50', logoUrl: '', username: '', password: '' });
+    this.clienteForm.reset({
+      nombre: '',
+      slug: '',
+      colorPrincipal: '#082d50',
+      logoUrl: '',
+      twilioWhatsappHabilitado: false,
+      twilioWhatsappFrom: '',
+      twilioMessagingServiceSid: '',
+      twilioContentSid: '',
+      whatsappConsultas: '',
+      username: '',
+      password: '',
+    });
   }
 
   private guardarLogoClienteSiCorresponde(cliente: Cliente, mensaje: string): void {

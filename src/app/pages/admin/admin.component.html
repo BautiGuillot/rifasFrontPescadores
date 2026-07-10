@@ -39,6 +39,16 @@
             <span>Logo actual</span>
           </div>
         }
+        <div class="settings-block">
+          <label class="checkbox-row">
+            <input type="checkbox" formControlName="twilioWhatsappHabilitado" />
+            WhatsApp automático
+          </label>
+          <label>Número Twilio <input type="text" formControlName="twilioWhatsappFrom" placeholder="5492364..." /></label>
+          <label>Messaging Service SID <input type="text" formControlName="twilioMessagingServiceSid" placeholder="Opcional" /></label>
+          <label>Content SID <input type="text" formControlName="twilioContentSid" placeholder="Template aprobado" /></label>
+          <label>WhatsApp consultas <input type="text" formControlName="whatsappConsultas" placeholder="5492364..." /></label>
+        </div>
         <label>Usuario <input type="text" formControlName="username" /></label>
         <label>
           {{ editandoClienteId() ? 'Nueva contraseña' : 'Contraseña' }}
@@ -282,6 +292,11 @@
                 } @else {
                   <span class="muted">Sin comprobante</span>
                 }
+                @if (compra.whatsappAutomaticoEstado === 'ENVIADO') {
+                  <span class="muted">Automático enviado</span>
+                } @else if (compra.whatsappAutomaticoEstado === 'ERROR') {
+                  <span class="alert compact-alert">Falló automático</span>
+                }
               </td>
               <td>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
               <td><span class="status">{{ compra.estado }}</span></td>
@@ -310,6 +325,18 @@
           {{ subiendoLogo() ? 'Subiendo logo...' : 'Subir logo' }}
           <input type="file" accept="image/*" [disabled]="subiendoLogo()" (change)="subirLogo($event)" />
         </label>
+        <div class="settings-block">
+          <h3>WhatsApp automático</h3>
+          <label class="checkbox-row">
+            <input type="checkbox" formControlName="twilioWhatsappHabilitado" />
+            Activar envío automático
+          </label>
+          <label>Número Twilio <input type="text" formControlName="twilioWhatsappFrom" placeholder="5492364..." /></label>
+          <label>Messaging Service SID <input type="text" formControlName="twilioMessagingServiceSid" placeholder="Opcional si usás From" /></label>
+          <label>Content SID <input type="text" formControlName="twilioContentSid" placeholder="Template aprobado de Twilio" /></label>
+          <label>WhatsApp consultas <input type="text" formControlName="whatsappConsultas" placeholder="5492364..." /></label>
+          <p class="field-hint">El automático pide responder sólo con comprobantes. Las consultas se derivan al número indicado.</p>
+        </div>
         <button class="primary-action" type="submit">Guardar marca</button>
       </form>
 

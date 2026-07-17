@@ -13,9 +13,8 @@
         Estado: {{ detalle.estado }}
       </p>
     </div>
-    <div class="price-box">
-      <span>Valor por fila</span>
-      <strong>{{ detalle.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+    <div class="header-back-action">
+      <a class="small-button" routerLink="/admin">Volver</a>
     </div>
   </section>
 } @else {
@@ -36,6 +35,77 @@
     <p class="alert">{{ error() }}</p>
   }
 
+  @if (edicionAbierta()) {
+    <div class="modal-backdrop">
+      <form class="form-panel modal-panel" [formGroup]="formEdicion" (ngSubmit)="guardarEdicion()">
+        <div class="panel-title-row">
+          <h2>Editar rifa</h2>
+          <button type="button" class="small-button" (click)="cerrarEdicion()">Cerrar</button>
+        </div>
+        <label>Titulo <input type="text" formControlName="titulo" /></label>
+        <label>
+          Slug publico
+          <input type="text" formControlName="slug" placeholder="sorteo-navidad" />
+          <span class="field-hint">Se usa para el link publico.</span>
+        </label>
+        <label>Descripcion <textarea rows="3" formControlName="descripcion"></textarea></label>
+        <label>
+          Aclaracion del sorteo
+          <textarea rows="3" formControlName="aclaracionSorteo"></textarea>
+          <span class="field-hint">Explica como y cuando se realizara el sorteo.</span>
+        </label>
+        <div class="form-grid">
+          <label>Numeros sorteo <input type="number" formControlName="cantidadNumeros" /></label>
+          <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>
+          <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
+          <label>Valor <input type="number" formControlName="valorNumero" /></label>
+        </div>
+        <label>
+          Alias de cobro
+          <select formControlName="aliasCobroId">
+            <option [value]="0">Seleccionar alias</option>
+            @for (alias of aliasesActivos(); track alias.id) {
+              <option [value]="alias.id">{{ alias.nombre }} · {{ alias.alias }}</option>
+            }
+          </select>
+          @if (aliasSeleccionado(); as alias) {
+            <span class="field-hint">{{ alias.entidad || 'Cuenta de cobro' }} · {{ alias.alias }}</span>
+          }
+        </label>
+        <label>
+          WhatsApp para comprobantes
+          <div class="phone-input">
+            <span>+54 9</span>
+            <input type="tel" inputmode="numeric" formControlName="whatsappComprobante" placeholder="2364379198" />
+          </div>
+          <span class="field-hint">Ingresa el celular sin 0 ni 15.</span>
+        </label>
+
+        <div class="nested-list" formArrayName="premios">
+          @for (premio of premios.controls; track $index) {
+            <div [formGroupName]="$index" class="nested-row prize-row">
+              <input type="number" formControlName="posicion" aria-label="Posicion del premio" />
+              <div class="prize-fields">
+                <input type="text" formControlName="descripcion" placeholder="Descripcion del premio" />
+                <label class="file-action">
+                  {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
+                  <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
+                </label>
+              </div>
+              @if (premio.value.imagenUrl) {
+                <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
+              }
+            </div>
+          }
+        </div>
+
+        <button class="primary-action" type="submit" [disabled]="guardandoEdicion()">
+          {{ guardandoEdicion() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </form>
+    </div>
+  }
+
   @if (rifa(); as detalle) {
     <section
       class="detail-layout public-raffle-layout admin-raffle-layout"
@@ -51,9 +121,14 @@
           <div class="actions">
             <a class="small-button" [href]="linkPublicoRifa(detalle)" target="_blank" rel="noopener">Abrir link</a>
             <button type="button" (click)="copiarLinkRifa(detalle)">Copiar</button>
-            <a class="small-button" routerLink="/admin">Volver</a>
+            @if (detalle.estado === 'BORRADOR') {
+              <button type="button" (click)="editar(detalle)">Editar</button>
+              <button type="button" class="primary-inline-action" (click)="publicar(detalle)">Publicar</button>
+              <button type="button" class="danger" (click)="cancelar(detalle)">Cancelar</button>
+            }
             @if (detalle.estado === 'PUBLICADA') {
               <button type="button" (click)="finalizarConGanadores(detalle)">Finalizar</button>
+              <button type="button" class="danger" (click)="cancelar(detalle)">Cancelar</button>
             }
             @if (detalle.estado === 'CANCELADA') {
               <button type="button" class="danger" (click)="eliminar(detalle)">Eliminar</button>
@@ -62,7 +137,6 @@
         </div>
 
         <div class="metric-grid compact-metric-grid">
-          <div class="metric"><span>Estado</span><strong>{{ detalle.estado }}</strong></div>
           <div class="metric"><span>Números</span><strong>{{ detalle.cantidadNumeros }}</strong></div>
           <div class="metric"><span>Filas</span><strong>{{ detalle.cantidadFilas }}</strong></div>
           <div class="metric alias-metric">

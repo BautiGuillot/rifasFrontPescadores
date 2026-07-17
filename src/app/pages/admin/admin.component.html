@@ -228,6 +228,10 @@
             }
           </div>
 
+          @if (errorRifa()) {
+            <p class="alert" role="alert" aria-live="assertive">{{ errorRifa() }}</p>
+          }
+
           <button class="primary-action" type="submit">
             {{ editandoRifaId() ? 'Guardar cambios' : 'Crear rifa' }}
           </button>

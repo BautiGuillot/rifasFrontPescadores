@@ -1184,6 +1184,13 @@ td span {
   margin-bottom: 0;
 }
 
+.header-back-action {
+  display: flex;
+  align-self: stretch;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
 .admin-raffle-layout {
   padding: 0;
 }

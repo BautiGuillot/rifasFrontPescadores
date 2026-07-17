@@ -27,6 +27,7 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly marcandoWhatsapp = signal(false);
   readonly segundosRestantes = signal(0);
   private cuentaRegresivaId: number | null = null;
+  private seguimientoId: number | null = null;
   private readonly slug = this.route.snapshot.paramMap.get('slug');
 
   readonly form = this.fb.nonNullable.group({
@@ -77,6 +78,7 @@ export class RifaDetalleComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerCuentaRegresiva();
+    this.detenerSeguimiento();
     this.theme.clearPublicColor();
   }
 
@@ -111,6 +113,7 @@ export class RifaDetalleComponent implements OnDestroy {
       next: (compra) => {
         this.compra.set(compra);
         this.iniciarCuentaRegresiva(compra);
+        this.iniciarSeguimiento(compra);
         this.enviando.set(false);
         this.slug ? this.cargarPorSlug(this.slug) : this.cargar(rifa.id);
       },
@@ -148,6 +151,7 @@ export class RifaDetalleComponent implements OnDestroy {
       next: (actualizada) => {
         this.compra.set(actualizada);
         this.detenerCuentaRegresiva();
+        this.iniciarSeguimiento(actualizada);
         this.comprobanteMensaje.set('Comprobante cargado.');
         this.subiendoComprobante.set(false);
       },
@@ -169,6 +173,7 @@ export class RifaDetalleComponent implements OnDestroy {
       next: (actualizada) => {
         this.compra.set(actualizada);
         this.detenerCuentaRegresiva();
+        this.iniciarSeguimiento(actualizada);
         this.comprobanteMensaje.set('Quedó registrado que enviaste el comprobante por WhatsApp.');
         this.marcandoWhatsapp.set(false);
       },
@@ -231,9 +236,57 @@ export class RifaDetalleComponent implements OnDestroy {
     }
   }
 
+  private iniciarSeguimiento(compra: Compra): void {
+    this.detenerSeguimiento();
+    if (!compra.tokenSeguimiento) {
+      return;
+    }
+    const actualizar = () => {
+      const actual = this.compra();
+      if (!actual || actual.id !== compra.id) {
+        this.detenerSeguimiento();
+        return;
+      }
+      this.api.seguimientoCompra(compra.id, compra.tokenSeguimiento!).subscribe({
+        next: (seguimiento) => this.aplicarSeguimiento(compra.id, seguimiento.estado, seguimiento.comprobanteRecibido),
+        error: () => undefined,
+      });
+    };
+    actualizar();
+    this.seguimientoId = window.setInterval(actualizar, 5_000);
+  }
+
+  private aplicarSeguimiento(compraId: number, estado: Compra['estado'], comprobanteRecibido: boolean): void {
+    const actual = this.compra();
+    if (!actual || actual.id !== compraId) {
+      return;
+    }
+    this.compra.set({
+      ...actual,
+      estado,
+      comprobanteWhatsapp: actual.comprobanteWhatsapp || comprobanteRecibido,
+    });
+    if (comprobanteRecibido) {
+      this.detenerCuentaRegresiva();
+    }
+    if (estado === 'APROBADA' || estado === 'CANCELADA') {
+      this.detenerCuentaRegresiva();
+      this.detenerSeguimiento();
+      this.slug ? this.cargarPorSlug(this.slug) : this.cargar(actual.rifaId);
+    }
+  }
+
+  private detenerSeguimiento(): void {
+    if (this.seguimientoId !== null) {
+      window.clearInterval(this.seguimientoId);
+      this.seguimientoId = null;
+    }
+  }
+
   private expirarCompra(compraId: number): void {
     this.api.expirarCompra(compraId).subscribe({
       next: (actualizada) => {
+        this.detenerSeguimiento();
         this.compra.set(null);
         this.seleccion.set([]);
         this.comprobanteMensaje.set('');

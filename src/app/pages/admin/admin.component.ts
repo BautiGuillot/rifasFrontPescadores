@@ -32,6 +32,7 @@ export class AdminComponent {
   readonly compraFiltro = signal<EstadoCompra | ''>('PENDIENTE_PAGO');
   readonly mensaje = signal('');
   readonly error = signal('');
+  readonly errorRifa = signal('');
   readonly subiendoLogo = signal(false);
   readonly logoClienteArchivo = signal<File | null>(null);
   readonly subiendoLogoCliente = signal(false);
@@ -186,10 +187,11 @@ export class AdminComponent {
         this.premios.at(index).patchValue({ imagenUrl: media.url });
         this.mensaje.set('Imagen de premio cargada.');
         this.error.set('');
+        this.errorRifa.set('');
         this.subiendoPremio.set(null);
       },
       error: (error) => {
-        this.error.set(error.error?.message || 'No se pudo subir la imagen del premio.');
+        this.errorRifa.set(error.error?.message || 'No se pudo subir la imagen del premio.');
         this.subiendoPremio.set(null);
       },
     });
@@ -207,6 +209,7 @@ export class AdminComponent {
 
   abrirCrearRifa(): void {
     this.limpiarFormularioRifa();
+    this.errorRifa.set('');
     this.modalRifaAbierto.set(true);
   }
 
@@ -239,13 +242,13 @@ export class AdminComponent {
     this.form.controls.slug.setValue(this.normalizarSlug(this.form.controls.slug.value));
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Revisá los datos de la rifa. El slug debe tener solo letras, números y guiones.');
+      this.errorRifa.set(this.mensajeErrorFormularioRifa());
       return;
     }
     const raw = this.form.getRawValue();
     const alias = this.aliasSeleccionado();
     if (!alias) {
-      this.error.set('Tenes que seleccionar un alias de cobro activo.');
+      this.errorRifa.set('Tenes que seleccionar un alias de cobro activo.');
       return;
     }
     const payload = {
@@ -260,12 +263,13 @@ export class AdminComponent {
       next: () => {
         this.mensaje.set(editandoId ? 'Rifa actualizada correctamente.' : 'Rifa creada correctamente.');
         this.error.set('');
+        this.errorRifa.set('');
         this.tab.set('rifas');
         this.rifaFiltro.set('');
         this.limpiarFormularioRifa();
         this.cargarTodo();
       },
-      error: (error) => this.error.set(error.error?.message || 'No se pudo guardar la rifa.'),
+      error: (error) => this.errorRifa.set(error.error?.message || 'No se pudo guardar la rifa.'),
     });
   }
 
@@ -277,6 +281,7 @@ export class AdminComponent {
     this.api.detalleRifa(rifa.id).subscribe({
       next: (detalle) => {
         this.editandoRifaId.set(detalle.id);
+        this.errorRifa.set('');
         this.modalRifaAbierto.set(true);
         this.form.patchValue({
           titulo: detalle.titulo,
@@ -305,6 +310,7 @@ export class AdminComponent {
   }
 
   cancelarEdicion(): void {
+    this.errorRifa.set('');
     this.limpiarFormularioRifa();
   }
 
@@ -583,6 +589,7 @@ export class AdminComponent {
     this.cargarCompras(this.compraFiltro());
   }
 
+
   private cargarAliases(): void {
     this.api.listarAliasCobro().subscribe({
       next: (aliases) => this.aliases.set(aliases),
@@ -677,6 +684,48 @@ export class AdminComponent {
     });
     this.premios.clear();
     this.premios.push(this.crearPremio(1));
+  }
+
+  private mensajeErrorFormularioRifa(): string {
+    const controles = this.form.controls;
+    if (controles.titulo.hasError('required')) {
+      return 'Completá el título de la rifa.';
+    }
+    if (controles.slug.hasError('required')) {
+      return 'Completá el slug público para generar el link de la rifa.';
+    }
+    if (controles.slug.hasError('pattern')) {
+      return 'El slug público debe tener entre 3 y 80 caracteres: letras, números o guiones.';
+    }
+    if (controles.cantidadNumeros.invalid) {
+      return 'Indicá una cantidad de números mayor a cero.';
+    }
+    if (controles.cantidadFilas.invalid) {
+      return 'Indicá una cantidad de filas mayor a cero.';
+    }
+    if (controles.cantidadGanadores.invalid) {
+      return 'Indicá al menos un ganador.';
+    }
+    if (controles.valorNumero.invalid) {
+      return 'Indicá un valor por número mayor a cero.';
+    }
+    if (controles.aliasCobroId.invalid) {
+      return 'Seleccioná un alias de cobro.';
+    }
+    if (controles.whatsappComprobante.hasError('required')) {
+      return 'Completá el WhatsApp para comprobantes.';
+    }
+    if (controles.whatsappComprobante.hasError('pattern')) {
+      return 'El WhatsApp debe tener entre 8 y 10 dígitos, sin el 0 ni el 15.';
+    }
+
+    for (let indice = 0; indice < this.premios.length; indice += 1) {
+      const premio = this.premios.at(indice);
+      if (premio.get('descripcion')?.invalid) {
+        return `Completá la descripción del premio ${premio.get('posicion')?.value ?? indice + 1}.`;
+      }
+    }
+    return 'Revisá los datos obligatorios de la rifa.';
   }
 
   private normalizarSlug(valor: string): string {

@@ -87,6 +87,7 @@ export interface Compra {
   estado: EstadoCompra;
   fechaCreacion: string;
   fechaExpiracion: string;
+  tokenSeguimiento?: string;
   comprobanteArchivo?: string;
   comprobanteWhatsapp: boolean;
   twilioMensajeSid?: string;
@@ -100,6 +101,11 @@ export interface Compra {
   aliasCobroCbuCvu?: string;
   aliasTransferencia: string;
   whatsappComprobante: string;
+}
+
+export interface CompraSeguimiento {
+  estado: EstadoCompra;
+  comprobanteRecibido: boolean;
 }
 
 export interface DashboardAdmin {

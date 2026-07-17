@@ -122,12 +122,18 @@
       } @else if (compra(); as compra) {
         <div class="success-panel">
           <h2>Gracias por realizar tu compra</h2>
-          @if (compraConComprobante()) {
+          @if (compra.estado === 'APROBADA') {
+            <p>Tu compra fue aprobada. Tus números ya quedaron confirmados en la rifa.</p>
+          } @else if (compra.estado === 'CANCELADA') {
+            <p>La reserva fue cancelada y los números quedaron liberados.</p>
+          } @else if (compraConComprobante()) {
             <p>Tu comprobante quedó informado. La reserva queda pendiente hasta que el admin la apruebe o cancele.</p>
-          } @else if (compra.whatsappAutomaticoEstado === 'ENVIADO') {
-            <p>Te enviamos un WhatsApp automático. Respondé ese mensaje con el comprobante o cargalo acá dentro de los 5 minutos.</p>
           } @else {
-            <p>Tenés 5 minutos para cargar el comprobante o avisar que lo enviaste por WhatsApp.</p>
+            @if (compra.whatsappAutomaticoEstado === 'ENVIADO') {
+              <p>Te enviamos un WhatsApp automático. Respondé ese mensaje con el comprobante o cargalo acá dentro de los 5 minutos.</p>
+            } @else {
+              <p>Tenés 5 minutos para cargar el comprobante o avisar que lo enviaste por WhatsApp.</p>
+            }
             <div class="countdown-box">
               <span>Tiempo restante</span>
               <strong>{{ cuentaRegresiva() }}</strong>
@@ -156,7 +162,8 @@
             <p class="notice">{{ comprobanteMensaje() }}</p>
           }
 
-          <div class="payment-actions">
+          @if (compra.estado === 'PENDIENTE_PAGO' && !compraConComprobante()) {
+            <div class="payment-actions">
             <label class="file-action primary-file-action">
               {{ subiendoComprobante() ? 'Subiendo...' : 'Cargar comprobante' }}
               <input
@@ -180,7 +187,8 @@
             >
               {{ compra.comprobanteWhatsapp ? 'Comprobante informado por WhatsApp' : (marcandoWhatsapp() ? 'Registrando...' : 'Ya envié el comprobante por WhatsApp') }}
             </button>
-          </div>
+            </div>
+          }
         </div>
       } @else {
         <div class="checkout-card">

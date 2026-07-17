@@ -6,6 +6,7 @@ import {
   AliasCobroDetalle,
   AliasCobroRequest,
   Compra,
+  CompraSeguimiento,
   Cliente,
   CrearClienteRequest,
   CrearRifaRequest,
@@ -70,6 +71,12 @@ export class RifasApiService {
 
   expirarCompra(compraId: number) {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/expirar`, {});
+  }
+
+  seguimientoCompra(compraId: number, token: string) {
+    return this.http.get<CompraSeguimiento>(
+      `${this.baseUrl}/rifas/compras/${compraId}/seguimiento?token=${encodeURIComponent(token)}`,
+    );
   }
 
   dashboard() {

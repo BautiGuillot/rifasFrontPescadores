@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AliasCobro, AliasCobroDetalle, Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
 
 type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'alias' | 'marca';
 
@@ -50,7 +51,7 @@ export class AdminComponent {
     valorNumero: [1000, [Validators.required, Validators.min(1)]],
     aliasCobroId: [0, [Validators.required, Validators.min(1)]],
     aliasTransferencia: [''],
-    whatsappComprobante: ['', [Validators.required, Validators.pattern(/^\+?[1-9][0-9]{7,14}$/)]],
+    whatsappComprobante: ['', [Validators.required, Validators.pattern(VALIDACION_CELULAR_ARGENTINA)]],
     premios: this.fb.array([this.crearPremio(1)]),
   });
 
@@ -63,7 +64,7 @@ export class AdminComponent {
     twilioWhatsappFrom: [''],
     twilioMessagingServiceSid: [''],
     twilioContentSid: [''],
-    whatsappConsultas: [''],
+    whatsappConsultas: ['', Validators.pattern(VALIDACION_CELULAR_ARGENTINA)],
     username: ['', Validators.required],
     password: [''],
   });
@@ -75,7 +76,7 @@ export class AdminComponent {
     twilioWhatsappFrom: [''],
     twilioMessagingServiceSid: [''],
     twilioContentSid: [''],
-    whatsappConsultas: [''],
+    whatsappConsultas: ['', Validators.pattern(VALIDACION_CELULAR_ARGENTINA)],
   });
 
   readonly aliasForm = this.fb.nonNullable.group({
@@ -124,7 +125,7 @@ export class AdminComponent {
       twilioWhatsappFrom: raw.twilioWhatsappFrom || undefined,
       twilioMessagingServiceSid: raw.twilioMessagingServiceSid || undefined,
       twilioContentSid: raw.twilioContentSid || undefined,
-      whatsappConsultas: raw.whatsappConsultas || undefined,
+      whatsappConsultas: raw.whatsappConsultas ? normalizarCelularArgentino(raw.whatsappConsultas) : undefined,
     }).subscribe({
       next: (cliente) => {
         this.miMarca.set(cliente);
@@ -136,7 +137,7 @@ export class AdminComponent {
           twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
           twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
           twilioContentSid: cliente.twilioContentSid || '',
-          whatsappConsultas: cliente.whatsappConsultas || '',
+          whatsappConsultas: celularLocalArgentino(cliente.whatsappConsultas),
         });
         this.mensaje.set('Marca actualizada.');
         this.error.set('');
@@ -251,6 +252,7 @@ export class AdminComponent {
       ...raw,
       aliasCobroId: Number(raw.aliasCobroId),
       aliasTransferencia: alias.alias,
+      whatsappComprobante: normalizarCelularArgentino(raw.whatsappComprobante),
     };
     const editandoId = this.editandoRifaId();
     const request = editandoId ? this.api.editarRifa(editandoId, payload) : this.api.crearRifa(payload);
@@ -287,7 +289,7 @@ export class AdminComponent {
           valorNumero: detalle.valorNumero,
           aliasCobroId: detalle.aliasCobroId || 0,
           aliasTransferencia: detalle.aliasTransferencia,
-          whatsappComprobante: detalle.whatsappComprobante,
+          whatsappComprobante: celularLocalArgentino(detalle.whatsappComprobante),
         });
         this.premios.clear();
         detalle.premios.forEach((premio) => {
@@ -501,9 +503,13 @@ export class AdminComponent {
       return;
     }
     const raw = this.clienteForm.getRawValue();
+    const requestPayload = {
+      ...raw,
+      whatsappConsultas: raw.whatsappConsultas ? normalizarCelularArgentino(raw.whatsappConsultas) : undefined,
+    };
     const request = editandoId
-      ? this.api.actualizarCliente(editandoId, raw)
-      : this.api.crearCliente(raw);
+      ? this.api.actualizarCliente(editandoId, requestPayload)
+      : this.api.crearCliente(requestPayload);
     request.subscribe({
       next: (cliente) => this.guardarLogoClienteSiCorresponde(cliente, editandoId ? 'Cliente actualizado.' : 'Cliente creado.'),
       error: (error) => this.error.set(error.error?.message || 'No se pudo guardar el cliente.'),
@@ -521,7 +527,7 @@ export class AdminComponent {
       twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
       twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
       twilioContentSid: cliente.twilioContentSid || '',
-      whatsappConsultas: cliente.whatsappConsultas || '',
+      whatsappConsultas: celularLocalArgentino(cliente.whatsappConsultas),
       username: cliente.username,
       password: '',
     });
@@ -545,7 +551,7 @@ export class AdminComponent {
   }
 
   whatsappUrl(numero: string): string {
-    return `https://wa.me/${numero.replace(/\D/g, '')}`;
+    return `https://wa.me/${normalizarCelularArgentino(numero)}`;
   }
 
   mediaUrl(url?: string | null): string {
@@ -596,7 +602,7 @@ export class AdminComponent {
           twilioWhatsappFrom: cliente.twilioWhatsappFrom || '',
           twilioMessagingServiceSid: cliente.twilioMessagingServiceSid || '',
           twilioContentSid: cliente.twilioContentSid || '',
-          whatsappConsultas: cliente.whatsappConsultas || '',
+          whatsappConsultas: celularLocalArgentino(cliente.whatsappConsultas),
         });
       },
       error: () => this.error.set('No se pudo cargar la marca.'),

@@ -205,7 +205,10 @@
             </label>
             <label>
               Teléfono / WhatsApp *
-              <input type="text" formControlName="telefono" placeholder="+542364379198" />
+              <div class="phone-input">
+                <span>+54 9</span>
+                <input type="tel" inputmode="numeric" formControlName="telefono" placeholder="2364379198" />
+              </div>
               <span class="field-hint">Usá código de país y área para que el negocio pueda contactarte.</span>
             </label>
 

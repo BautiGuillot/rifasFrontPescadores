@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Compra, EstadoCompra, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { normalizarCelularArgentino } from '../../core/telefono-argentina';
 
 @Component({
   selector: 'app-admin-rifa-detalle',
@@ -46,7 +47,7 @@ export class AdminRifaDetalleComponent {
   }
 
   whatsappUrl(numero: string): string {
-    return `https://wa.me/${numero.replace(/\D/g, '')}`;
+    return `https://wa.me/${normalizarCelularArgentino(numero)}`;
   }
 
   colorPrincipal(rifa: RifaDetalle): string {

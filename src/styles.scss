@@ -593,6 +593,37 @@ label {
   font-weight: 700;
 }
 
+.phone-input {
+  display: flex;
+  min-height: 40px;
+  overflow: hidden;
+  border: 1px solid #cfd9e2;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.phone-input span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border-right: 1px solid #dbe4ec;
+  background: #f1f5f9;
+  color: #405163;
+  font-weight: 800;
+}
+
+.phone-input input {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.phone-input:focus-within {
+  border-color: var(--brand-color, #0b3b63);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color, #0b3b63) 16%, transparent);
+}
+
 .settings-block {
   display: grid;
   gap: 12px;

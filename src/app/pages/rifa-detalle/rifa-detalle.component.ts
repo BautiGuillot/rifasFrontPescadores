@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Compra, NumeroRifa, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
 import { TenantThemeService } from '../../core/tenant-theme.service';
+import { normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
 
 @Component({
   selector: 'app-rifa-detalle',
@@ -31,7 +32,7 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     dni: ['', Validators.required],
-    telefono: ['', [Validators.required, Validators.pattern(/^\+?[1-9][0-9]{7,14}$/)]],
+    telefono: ['', [Validators.required, Validators.pattern(VALIDACION_CELULAR_ARGENTINA)]],
   });
 
   readonly total = computed(() => {
@@ -99,7 +100,12 @@ export class RifaDetalleComponent implements OnDestroy {
     }
     this.enviando.set(true);
     this.error.set('');
-    const request = { ...this.form.getRawValue(), numeros: this.seleccion() };
+    const datos = this.form.getRawValue();
+    const request = {
+      ...datos,
+      telefono: normalizarCelularArgentino(datos.telefono),
+      numeros: this.seleccion(),
+    };
     const compra$ = this.slug ? this.api.comprarPorSlug(this.slug, request) : this.api.comprar(rifa.id, request);
     compra$.subscribe({
       next: (compra) => {
@@ -196,7 +202,7 @@ export class RifaDetalleComponent implements OnDestroy {
   }
 
   private whatsappNumero(numero: string): string {
-    return numero.replace(/\D/g, '');
+    return normalizarCelularArgentino(numero);
   }
 
   private iniciarCuentaRegresiva(compra: Compra): void {

@@ -47,7 +47,13 @@
           <label>Número Twilio <input type="text" formControlName="twilioWhatsappFrom" placeholder="5492364..." /></label>
           <label>Messaging Service SID <input type="text" formControlName="twilioMessagingServiceSid" placeholder="Opcional" /></label>
           <label>Content SID <input type="text" formControlName="twilioContentSid" placeholder="Template aprobado" /></label>
-          <label>WhatsApp consultas <input type="text" formControlName="whatsappConsultas" placeholder="5492364..." /></label>
+          <label>WhatsApp consultas
+            <div class="phone-input">
+              <span>+54 9</span>
+              <input type="tel" inputmode="numeric" formControlName="whatsappConsultas" placeholder="2364379198" />
+            </div>
+            <span class="field-hint">Sin 0 ni 15.</span>
+          </label>
         </div>
         <label>Usuario <input type="text" formControlName="username" /></label>
         <label>
@@ -196,7 +202,13 @@
               <span class="field-hint">{{ alias.entidad || 'Cuenta de cobro' }} · {{ alias.alias }}</span>
             }
           </label>
-          <label>WhatsApp <input type="text" formControlName="whatsappComprobante" /></label>
+          <label>WhatsApp para comprobantes
+            <div class="phone-input">
+              <span>+54 9</span>
+              <input type="tel" inputmode="numeric" formControlName="whatsappComprobante" placeholder="2364379198" />
+            </div>
+            <span class="field-hint">Ingresá el celular sin 0 ni 15.</span>
+          </label>
 
           <div class="nested-list" formArrayName="premios">
             @for (premio of premios.controls; track $index) {
@@ -489,7 +501,13 @@
           <label>Número Twilio <input type="text" formControlName="twilioWhatsappFrom" placeholder="5492364..." /></label>
           <label>Messaging Service SID <input type="text" formControlName="twilioMessagingServiceSid" placeholder="Opcional si usás From" /></label>
           <label>Content SID <input type="text" formControlName="twilioContentSid" placeholder="Template aprobado de Twilio" /></label>
-          <label>WhatsApp consultas <input type="text" formControlName="whatsappConsultas" placeholder="5492364..." /></label>
+          <label>WhatsApp consultas
+            <div class="phone-input">
+              <span>+54 9</span>
+              <input type="tel" inputmode="numeric" formControlName="whatsappConsultas" placeholder="2364379198" />
+            </div>
+            <span class="field-hint">Sin 0 ni 15.</span>
+          </label>
           <p class="field-hint">El automático pide responder sólo con comprobantes. Las consultas se derivan al número indicado.</p>
         </div>
         <button class="primary-action" type="submit">Guardar marca</button>

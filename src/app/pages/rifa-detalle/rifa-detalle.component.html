@@ -1,6 +1,6 @@
 @if (rifa(); as rifa) {
   <section class="page-header detail-header branded-rifa-header" [style.--client-color]="colorPrincipal(rifa)">
-    <div>
+    <div class="public-raffle-heading">
       <div class="public-brand">
         @if (rifa.clienteLogoUrl) {
           <img [src]="mediaUrl(rifa.clienteLogoUrl)" [alt]="rifa.clienteNombre || 'Logo'" />
@@ -8,10 +8,25 @@
         <span>{{ rifa.clienteNombre || 'Rifa activa' }}</span>
       </div>
       <h1>{{ rifa.titulo }}</h1>
-      <p>{{ rifa.descripcion }}</p>
-      <p class="state-banner" [class.closed]="rifa.estado !== 'PUBLICADA'">
-        Estado: {{ rifa.estado }}
-      </p>
+
+      @if (rifa.premios.length) {
+        <div class="public-prize-gallery" aria-label="Premios de la rifa">
+          @for (premio of rifa.premios; track premio.posicion) {
+            <article>
+              <span>{{ etiquetaPremio(premio.posicion) }}</span>
+              @if (premio.imagenUrl) {
+                <img
+                  [src]="mediaUrl(premio.imagenUrl)"
+                  [alt]="etiquetaPremio(premio.posicion) + ': ' + premio.descripcion"
+                />
+              } @else {
+                <div class="public-prize-placeholder" aria-hidden="true">Sin imagen</div>
+              }
+              <strong>{{ premio.descripcion }}</strong>
+            </article>
+          }
+        </div>
+      }
     </div>
     <div class="price-box">
       <span>Valor por fila</span>
@@ -25,35 +40,6 @@
     [style.--brand-blue-700]="colorPrincipal(rifa)"
   >
     <div class="numbers-panel public-numbers-panel">
-      @if (rifa.premios.length) {
-        <details class="public-prizes-disclosure">
-          <summary>
-            <span>Premios</span>
-            <strong>{{ rifa.premios.length }}</strong>
-          </summary>
-          <div class="public-prizes">
-            @for (premio of rifa.premios; track premio.posicion) {
-              <article>
-                @if (premio.imagenUrl) {
-                  <img [src]="mediaUrl(premio.imagenUrl)" alt="" />
-                }
-                <div>
-                  <span>Premio {{ premio.posicion }}</span>
-                  <strong>{{ premio.descripcion }}</strong>
-                </div>
-              </article>
-            }
-          </div>
-        </details>
-      }
-
-      @if (rifa.aclaracionSorteo) {
-        <div class="raffle-draw-note">
-          <strong>Cómo se sortea</strong>
-          <p>{{ rifa.aclaracionSorteo }}</p>
-        </div>
-      }
-
       @if (rifa.estado === 'FINALIZADA' && rifa.ganadores.length) {
         <div class="public-winners">
           <h2>Ganadores</h2>
@@ -106,9 +92,26 @@
           </button>
         }
       </div>
+
+      @if (numerosSeleccionados().length && !compra()) {
+        <button type="button" class="mobile-selection-bar" (click)="irACompra()">
+          <span>
+            <strong>{{ numerosSeleccionados().length }}</strong>
+            {{ numerosSeleccionados().length === 1 ? 'fila elegida' : 'filas elegidas' }}
+          </span>
+          <b>{{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }} · Continuar</b>
+        </button>
+      }
+
+      @if (rifa.aclaracionSorteo) {
+        <div class="raffle-draw-note public-draw-note">
+          <strong>Cómo se sortea</strong>
+          <p>{{ rifa.aclaracionSorteo }}</p>
+        </div>
+      }
     </div>
 
-    <aside class="form-panel public-checkout-panel">
+    <aside id="datos-compra" class="form-panel public-checkout-panel">
       @if (rifa.estado !== 'PUBLICADA') {
         <div class="success-panel">
           @if (rifa.estado === 'FINALIZADA') {
@@ -121,7 +124,7 @@
         </div>
       } @else if (compra(); as compra) {
         <div class="success-panel">
-          <h2>Gracias por realizar tu compra</h2>
+          <h2>Gracias por tu compra</h2>
           @if (compra.estado === 'APROBADA') {
             <p>Tu compra fue aprobada. Tus números ya quedaron confirmados en la rifa.</p>
           } @else if (compra.estado === 'CANCELADA') {
@@ -139,7 +142,7 @@
               <strong>{{ cuentaRegresiva() }}</strong>
             </div>
           }
-          <dl>
+          <dl class="purchase-details">
             <div>
               <dt>Filas</dt>
               <dd>{{ compra.numeros.join(', ') }}</dd>
@@ -152,8 +155,26 @@
               <dt>Alias</dt>
               <dd>{{ compra.aliasTransferencia }}</dd>
             </div>
+            @if (compra.aliasCobroTitular) {
+              <div>
+                <dt>Titular</dt>
+                <dd>{{ compra.aliasCobroTitular }}</dd>
+              </div>
+            }
+            @if (compra.aliasCobroCbuCvu) {
+              <div>
+                <dt>CBU / CVU</dt>
+                <dd>{{ compra.aliasCobroCbuCvu }}</dd>
+              </div>
+            }
+            @if (compra.aliasCobroEntidad) {
+              <div>
+                <dt>Banco</dt>
+                <dd>{{ compra.aliasCobroEntidad }}</dd>
+              </div>
+            }
             <div>
-              <dt>WhatsApp</dt>
+              <dt>Número de la empresa</dt>
               <dd>{{ compra.whatsappComprobante }}</dd>
             </div>
           </dl>
@@ -205,11 +226,6 @@
             <label>
               Nombre y apellido *
               <input type="text" formControlName="nombre" placeholder="Juan García" />
-              <span class="field-hint">Como figura en tu documento.</span>
-            </label>
-            <label>
-              DNI *
-              <input type="text" formControlName="dni" placeholder="12345678" />
             </label>
             <label>
               Teléfono / WhatsApp *

@@ -1,10 +1,13 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AliasCobro, Compra, EstadoCompra, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { vistaPreviaNumeracion } from '../../core/numeracion-rifa';
 import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-admin-rifa-detalle',
@@ -16,6 +19,7 @@ export class AdminRifaDetalleComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly rifa = signal<RifaDetalle | null>(null);
   readonly compras = signal<Compra[]>([]);
@@ -25,6 +29,7 @@ export class AdminRifaDetalleComponent {
   readonly edicionAbierta = signal(false);
   readonly guardandoEdicion = signal(false);
   readonly subiendoPremio = signal<number | null>(null);
+  readonly ultimaActualizacionCompras = signal<Date | null>(null);
   readonly aliases = signal<AliasCobro[]>([]);
   readonly formEdicion = this.fb.nonNullable.group({
     titulo: ['', Validators.required],
@@ -32,13 +37,17 @@ export class AdminRifaDetalleComponent {
     descripcion: [''],
     aclaracionSorteo: [''],
     cantidadNumeros: [100, [Validators.required, Validators.min(1)]],
-    cantidadFilas: [100, [Validators.required, Validators.min(1)]],
+    numerosPorFila: [1, [Validators.required, Validators.min(1)]],
+    numeroInicial: [0, [Validators.required, Validators.min(0), Validators.max(1)]],
     cantidadGanadores: [1, [Validators.required, Validators.min(1)]],
     valorNumero: [1000, [Validators.required, Validators.min(1)]],
     aliasCobroId: [0, [Validators.required, Validators.min(1)]],
     aliasTransferencia: [''],
     whatsappComprobante: ['', [Validators.required, Validators.pattern(VALIDACION_CELULAR_ARGENTINA)]],
     premios: this.fb.array([this.crearPremio(1)]),
+  });
+  private readonly configuracionNumeros = toSignal(this.formEdicion.valueChanges, {
+    initialValue: this.formEdicion.getRawValue(),
   });
   readonly comprasFiltradas = computed(() => {
     const filtro = this.compraFiltro();
@@ -50,14 +59,46 @@ export class AdminRifaDetalleComponent {
   readonly comprasAprobadas = computed(() =>
     this.compras().filter((compra) => compra.estado === 'APROBADA').length,
   );
+  readonly compradoresPorFila = computed(() => {
+    const compradores = new Map<string, { nombre: string; estado: EstadoCompra }>();
+    this.compras()
+      .filter((compra) => compra.estado !== 'CANCELADA')
+      .sort((a, b) => a.fechaCreacion.localeCompare(b.fechaCreacion))
+      .forEach((compra) => {
+        compra.numeros.forEach((numeroCompra) => {
+          const etiqueta = numeroCompra.split(' (', 1)[0].trim();
+          compradores.set(etiqueta, { nombre: compra.nombre, estado: compra.estado });
+        });
+      });
+    return compradores;
+  });
   readonly aliasesActivos = computed(() => this.aliases().filter((alias) => alias.activo));
   readonly aliasSeleccionado = computed(() => {
     const aliasId = Number(this.formEdicion.controls.aliasCobroId.value);
     return this.aliases().find((alias) => alias.id === aliasId) || null;
   });
+  readonly vistaPreviaNumeros = computed(() => {
+    const { cantidadNumeros, numerosPorFila, numeroInicial } = this.configuracionNumeros();
+    return vistaPreviaNumeracion(cantidadNumeros ?? 0, numerosPorFila ?? 0, numeroInicial ?? -1);
+  });
+  readonly mensajeWhatsApp = computed(() => {
+    const rifa = this.rifa();
+    if (!rifa) {
+      return '';
+    }
+    return this.generarMensajeWhatsApp(rifa, this.compras());
+  });
 
   constructor() {
     this.cargarDetalle();
+    timer(15_000, 15_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const rifa = this.rifa();
+        if (rifa) {
+          this.cargarCompras(rifa.id, false);
+        }
+      });
   }
 
   get premios(): FormArray {
@@ -73,6 +114,31 @@ export class AdminRifaDetalleComponent {
       () => this.mensaje.set('Link copiado.'),
       () => this.error.set('No se pudo copiar el link.'),
     );
+  }
+
+  copiarMensajeWhatsApp(): void {
+    navigator.clipboard.writeText(this.mensajeWhatsApp()).then(
+      () => {
+        this.mensaje.set('Mensaje para WhatsApp copiado.');
+        this.error.set('');
+      },
+      () => this.error.set('No se pudo copiar el mensaje.'),
+    );
+  }
+
+  compartirMensajeWhatsApp(): void {
+    const mensaje = this.mensajeWhatsApp();
+    if (!mensaje) {
+      return;
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank', 'noopener');
+  }
+
+  actualizarMensajeWhatsApp(): void {
+    const rifa = this.rifa();
+    if (rifa) {
+      this.cargarCompras(rifa.id);
+    }
   }
 
   whatsappUrl(numero: string): string {
@@ -96,6 +162,10 @@ export class AdminRifaDetalleComponent {
 
   cambiarFiltroCompras(estado: EstadoCompra | ''): void {
     this.compraFiltro.set(estado);
+  }
+
+  compradorDeFila(etiqueta: string): { nombre: string; estado: EstadoCompra } | undefined {
+    return this.compradoresPorFila().get(etiqueta);
   }
 
   aprobarCompra(id: number): void {
@@ -150,7 +220,8 @@ export class AdminRifaDetalleComponent {
       descripcion: rifa.descripcion || '',
       aclaracionSorteo: rifa.aclaracionSorteo || '',
       cantidadNumeros: rifa.cantidadNumeros,
-      cantidadFilas: rifa.cantidadFilas,
+      numerosPorFila: rifa.numerosPorFila,
+      numeroInicial: rifa.numeroInicial,
       cantidadGanadores: rifa.cantidadGanadores,
       valorNumero: rifa.valorNumero,
       aliasCobroId: rifa.aliasCobroId || 0,
@@ -216,6 +287,10 @@ export class AdminRifaDetalleComponent {
     this.formEdicion.controls.slug.setValue(this.normalizarSlug(this.formEdicion.controls.slug.value));
     if (this.formEdicion.invalid) {
       this.formEdicion.markAllAsTouched();
+      return;
+    }
+    if (!this.vistaPreviaNumeros()) {
+      this.error.set('La cantidad total de números debe ser divisible por los números incluidos en cada fila.');
       return;
     }
     const alias = this.aliasSeleccionado();
@@ -309,11 +384,86 @@ export class AdminRifaDetalleComponent {
     });
   }
 
-  private cargarCompras(rifaId: number): void {
+  private cargarCompras(rifaId: number, mostrarError = true): void {
     this.api.listarCompras().subscribe({
-      next: (compras) => this.compras.set(compras.filter((compra) => compra.rifaId === rifaId)),
-      error: () => this.error.set('No se pudieron cargar las compras de la rifa.'),
+      next: (compras) => {
+        this.compras.set(compras.filter((compra) => compra.rifaId === rifaId));
+        this.ultimaActualizacionCompras.set(new Date());
+      },
+      error: () => {
+        if (mostrarError) {
+          this.error.set('No se pudieron cargar las compras de la rifa.');
+        }
+      },
     });
+  }
+
+  private generarMensajeWhatsApp(rifa: RifaDetalle, compras: Compra[]): string {
+    const formatoMoneda = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    });
+    const numerosPorFila = rifa.numeros[0]?.numerosIncluidos.length || 1;
+    const premios = [...rifa.premios]
+      .sort((a, b) => a.posicion - b.posicion)
+      .map((premio) => {
+        const descripcion = premio.descripcion
+          .split(/\r?\n/)
+          .map((linea) => linea.trim())
+          .filter(Boolean)
+          .map((linea) => (/^[*•-]/.test(linea) ? linea : `* ${linea}`))
+          .join('\n');
+        return `PREMIO ${premio.posicion}\n${descripcion}`;
+      })
+      .join('\n\n');
+
+    const compradoresPorFila = new Map<string, string>();
+    compras
+      .filter((compra) => compra.estado !== 'CANCELADA')
+      .sort((a, b) => a.fechaCreacion.localeCompare(b.fechaCreacion))
+      .forEach((compra) => {
+        compra.numeros.forEach((numeroCompra) => {
+          const etiqueta = numeroCompra.split(' (', 1)[0].trim();
+          compradoresPorFila.set(etiqueta, compra.nombre.trim());
+        });
+      });
+
+    const filas = [...rifa.numeros]
+      .sort((a, b) => a.valor - b.valor)
+      .map((fila) => {
+        const numeros = fila.numerosIncluidos.length ? fila.numerosIncluidos.join('_') : fila.etiqueta;
+        const comprador = compradoresPorFila.get(fila.etiqueta);
+        return comprador ? `${numeros} ${comprador}` : numeros;
+      })
+      .join('\n');
+
+    const datosTransferencia = [
+      'LAS TRANSFERENCIAS SE HACEN A:',
+      '',
+      `Alias: ${rifa.aliasTransferencia || '-'}`,
+      rifa.aliasCobroEntidad ? `Banco: ${rifa.aliasCobroEntidad}` : '',
+      rifa.aliasCobroCbuCvu ? `CBU/CVU: ${rifa.aliasCobroCbuCvu}` : '',
+      rifa.aliasCobroTitular ? `A nombre de ${rifa.aliasCobroTitular}` : '',
+    ].filter((linea) => linea !== '').join('\n');
+
+    return [
+      rifa.titulo.toUpperCase(),
+      '',
+      `${rifa.cantidadFilas} FILAS a sólo ${formatoMoneda.format(rifa.valorNumero)} CADA UNA (Incluye ${numerosPorFila} ${numerosPorFila === 1 ? 'número' : 'números'})`,
+      '',
+      premios,
+      '',
+      'Recuerden enviar el comprobante para validar su jugada.',
+      '',
+      filas,
+      '',
+      datosTransferencia,
+      '',
+      rifa.aclaracionSorteo ? `🍀 ${rifa.aclaracionSorteo}` : '',
+      '',
+      this.linkPublicoRifa(rifa),
+    ].filter((linea, index, lineas) => linea !== '' || (index > 0 && lineas[index - 1] !== '')).join('\n').trim();
   }
 
   private crearPremio(posicion: number) {

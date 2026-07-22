@@ -1,10 +1,12 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AliasCobro, AliasCobroDetalle, Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
+import { AliasCobro, Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaResumen } from '../../core/api.models';
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { vistaPreviaNumeracion } from '../../core/numeracion-rifa';
 import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
 
 type AdminTab = 'dashboard' | 'rifas' | 'compras' | 'alias' | 'marca';
@@ -23,8 +25,6 @@ export class AdminComponent {
   readonly rifas = signal<RifaResumen[]>([]);
   readonly compras = signal<Compra[]>([]);
   readonly aliases = signal<AliasCobro[]>([]);
-  readonly aliasDetalle = signal<AliasCobroDetalle | null>(null);
-  readonly cargandoAliasDetalle = signal(false);
   readonly clientes = signal<Cliente[]>([]);
   readonly miMarca = signal<Cliente | null>(null);
   readonly modalRifaAbierto = signal(false);
@@ -47,7 +47,8 @@ export class AdminComponent {
     descripcion: [''],
     aclaracionSorteo: [''],
     cantidadNumeros: [100, [Validators.required, Validators.min(1)]],
-    cantidadFilas: [100, [Validators.required, Validators.min(1)]],
+    numerosPorFila: [1, [Validators.required, Validators.min(1)]],
+    numeroInicial: [0, [Validators.required, Validators.min(0), Validators.max(1)]],
     cantidadGanadores: [1, [Validators.required, Validators.min(1)]],
     valorNumero: [1000, [Validators.required, Validators.min(1)]],
     aliasCobroId: [0, [Validators.required, Validators.min(1)]],
@@ -89,6 +90,10 @@ export class AdminComponent {
     activo: [true],
   });
 
+  private readonly configuracionNumeros = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+
   readonly rifasFiltradas = computed(() => {
     const filtro = this.rifaFiltro();
     return filtro ? this.rifas().filter((rifa) => rifa.estado === filtro) : this.rifas();
@@ -99,6 +104,10 @@ export class AdminComponent {
   readonly aliasSeleccionado = computed(() => {
     const id = Number(this.form.controls.aliasCobroId.value);
     return this.aliases().find((alias) => alias.id === id) || null;
+  });
+  readonly vistaPreviaNumeros = computed(() => {
+    const { cantidadNumeros, numerosPorFila, numeroInicial } = this.configuracionNumeros();
+    return vistaPreviaNumeracion(cantidadNumeros ?? 0, numerosPorFila ?? 0, numeroInicial ?? -1);
   });
 
   constructor() {
@@ -245,6 +254,10 @@ export class AdminComponent {
       this.errorRifa.set(this.mensajeErrorFormularioRifa());
       return;
     }
+    if (!this.vistaPreviaNumeros()) {
+      this.errorRifa.set('La cantidad total de números debe ser divisible por los números incluidos en cada fila.');
+      return;
+    }
     const raw = this.form.getRawValue();
     const alias = this.aliasSeleccionado();
     if (!alias) {
@@ -289,7 +302,8 @@ export class AdminComponent {
           descripcion: detalle.descripcion || '',
           aclaracionSorteo: detalle.aclaracionSorteo || '',
           cantidadNumeros: detalle.cantidadNumeros,
-          cantidadFilas: detalle.cantidadFilas,
+          numerosPorFila: detalle.numerosPorFila,
+          numeroInicial: detalle.numeroInicial,
           cantidadGanadores: detalle.cantidadGanadores,
           valorNumero: detalle.valorNumero,
           aliasCobroId: detalle.aliasCobroId || 0,
@@ -433,27 +447,6 @@ export class AdminComponent {
     this.limpiarFormularioAlias();
   }
 
-  verAlias(alias: AliasCobro): void {
-    this.cargandoAliasDetalle.set(true);
-    this.aliasDetalle.set(null);
-    this.api.detalleAliasCobro(alias.id).subscribe({
-      next: (detalle) => {
-        this.aliasDetalle.set(detalle);
-        this.cargandoAliasDetalle.set(false);
-        this.error.set('');
-      },
-      error: (error) => {
-        this.error.set(error.error?.message || 'No se pudo cargar el resumen del alias.');
-        this.cargandoAliasDetalle.set(false);
-      },
-    });
-  }
-
-  cerrarDetalleAlias(): void {
-    this.aliasDetalle.set(null);
-    this.cargandoAliasDetalle.set(false);
-  }
-
   cambiarEstadoAlias(alias: AliasCobro): void {
     const activo = !alias.activo;
     if (!confirm(`${activo ? 'Activar' : 'Inactivar'} este alias?`)) {
@@ -556,6 +549,25 @@ export class AdminComponent {
     });
   }
 
+  eliminarCliente(cliente: Cliente): void {
+    if (!confirm(
+      `¿Eliminar definitivamente a ${cliente.nombre}? Se borrarán todas sus rifas, compras y datos asociados. Esta acción no se puede deshacer.`,
+    )) {
+      return;
+    }
+    this.api.eliminarCliente(cliente.id).subscribe({
+      next: () => {
+        if (this.editandoClienteId() === cliente.id) {
+          this.limpiarFormularioCliente();
+        }
+        this.mensaje.set(`Cliente ${cliente.nombre} eliminado definitivamente.`);
+        this.error.set('');
+        this.cargarClientes();
+      },
+      error: (error) => this.error.set(error.error?.message || 'No se pudo eliminar el cliente.'),
+    });
+  }
+
   whatsappUrl(numero: string): string {
     return `https://wa.me/${normalizarCelularArgentino(numero)}`;
   }
@@ -591,7 +603,7 @@ export class AdminComponent {
 
 
   private cargarAliases(): void {
-    this.api.listarAliasCobro().subscribe({
+    this.api.listarAliasCobro(false).subscribe({
       next: (aliases) => this.aliases.set(aliases),
       error: () => this.error.set('No se pudieron cargar los alias.'),
     });
@@ -675,7 +687,8 @@ export class AdminComponent {
       descripcion: '',
       aclaracionSorteo: '',
       cantidadNumeros: 100,
-      cantidadFilas: 100,
+      numerosPorFila: 1,
+      numeroInicial: 0,
       cantidadGanadores: 1,
       valorNumero: 1000,
       aliasCobroId: this.aliasesActivos()[0]?.id || 0,
@@ -700,8 +713,14 @@ export class AdminComponent {
     if (controles.cantidadNumeros.invalid) {
       return 'Indicá una cantidad de números mayor a cero.';
     }
-    if (controles.cantidadFilas.invalid) {
-      return 'Indicá una cantidad de filas mayor a cero.';
+    if (controles.numerosPorFila.invalid) {
+      return 'Indicá cuántos números incluye cada fila.';
+    }
+    if (controles.numeroInicial.invalid) {
+      return 'La numeración debe comenzar en 00 o en 01.';
+    }
+    if (!this.vistaPreviaNumeros()) {
+      return 'La cantidad total de números debe ser divisible por los números incluidos en cada fila.';
     }
     if (controles.cantidadGanadores.invalid) {
       return 'Indicá al menos un ganador.';

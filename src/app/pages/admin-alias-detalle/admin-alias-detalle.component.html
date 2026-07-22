@@ -1,0 +1,180 @@
+@if (detalle(); as datos) {
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Alias de cobro</p>
+      <h1>{{ datos.alias.nombre }}</h1>
+      <p>{{ datos.alias.alias }}</p>
+    </div>
+    <div class="alias-header-actions">
+      <button type="button" class="primary-inline-action" (click)="abrirEdicion()">Editar alias</button>
+      <a class="small-button" routerLink="/admin">Volver al panel</a>
+    </div>
+  </section>
+} @else {
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Alias de cobro</p>
+      <h1>Detalle del alias</h1>
+    </div>
+    <a class="small-button" routerLink="/admin">Volver al panel</a>
+  </section>
+}
+
+<section class="admin-shell admin-alias-detail-shell">
+  @if (mensaje()) {
+    <p class="notice">{{ mensaje() }}</p>
+  }
+  @if (error()) {
+    <p class="alert">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <div class="table-panel"><p class="muted">Cargando rifas del alias...</p></div>
+  }
+
+  @if (detalle(); as datos) {
+    @if (editando()) {
+      <form class="form-panel alias-edit-form" [formGroup]="aliasForm" (ngSubmit)="guardarAlias()">
+        <div class="panel-title-row alias-edit-title">
+          <div>
+            <p class="eyebrow">Configuración</p>
+            <h2>Editar alias</h2>
+          </div>
+          <button type="button" class="small-button" (click)="cerrarEdicion()">Cerrar</button>
+        </div>
+        <div class="alias-edit-fields">
+          <label>Nombre <input type="text" formControlName="nombre" /></label>
+          <label>Alias <input type="text" formControlName="alias" /></label>
+          <label>Banco o billetera <input type="text" formControlName="entidad" /></label>
+          <label>Titular <input type="text" formControlName="titular" /></label>
+          <label class="alias-cbu-field">CBU/CVU <input type="text" formControlName="cbuCvu" /></label>
+          <label class="checkbox-row alias-active-field">
+            <input type="checkbox" formControlName="activo" />
+            Alias activo
+          </label>
+        </div>
+        <div class="alias-edit-actions">
+          <button type="submit" class="primary-action" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+          <button type="button" class="small-button" (click)="cerrarEdicion()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    <div class="metric-grid compact-metric-grid">
+      <div class="metric">
+        <span>Rifas finalizadas</span>
+        <strong>{{ datos.alias.rifasFinalizadas }}</strong>
+        <small>{{ datos.alias.rifasAsociadas }} asignadas</small>
+      </div>
+      <div class="metric">
+        <span>Compras aprobadas</span>
+        <strong>{{ datos.alias.comprasAprobadas }}</strong>
+      </div>
+      <div class="metric">
+        <span>Recaudación aprobada</span>
+        <strong>{{ datos.alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+      </div>
+    </div>
+
+    <div class="table-panel alias-bank-data">
+      <div><span>Banco o billetera</span><strong>{{ datos.alias.entidad || 'Sin informar' }}</strong></div>
+      <div><span>Titular</span><strong>{{ datos.alias.titular || 'Sin informar' }}</strong></div>
+      <div><span>CBU/CVU</span><strong>{{ datos.alias.cbuCvu || 'Sin informar' }}</strong></div>
+      <div><span>Estado</span><strong>{{ datos.alias.activo ? 'ACTIVO' : 'INACTIVO' }}</strong></div>
+    </div>
+
+    <form class="table-panel alias-date-filter" [formGroup]="filtroForm" (ngSubmit)="aplicarFiltro()">
+      <div>
+        <h2>Filtrar rifas</h2>
+        <p class="muted">El rango de fechas busca rifas por su fecha de finalización y calcula la recaudación aprobada en ese período.</p>
+      </div>
+      <label>Desde <input type="date" formControlName="desde" /></label>
+      <label>Hasta <input type="date" formControlName="hasta" /></label>
+      <div class="alias-filter-actions">
+        <button type="submit" class="primary-inline-action">Aplicar</button>
+        <button type="button" class="small-button" (click)="limpiarFiltro()">Limpiar</button>
+      </div>
+    </form>
+
+    <section class="table-panel alias-raffles-panel">
+      <div class="table-toolbar alias-rifa-toolbar">
+        <div>
+          <p class="eyebrow">Actividad del alias</p>
+          <h2>Rifas</h2>
+          <span class="muted">{{ rifasFiltradas().length }} resultados</span>
+        </div>
+        <label>
+          Estado
+          <select [value]="estado()" (change)="cambiarEstado($any($event.target).value)">
+            <option value="">Todos</option>
+            <option value="BORRADOR">Borrador</option>
+            <option value="PUBLICADA">Publicada</option>
+            <option value="FINALIZADA">Finalizada</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="alias-raffle-list">
+        @for (rifa of rifasFiltradas(); track rifa.id) {
+          <article class="alias-raffle-card">
+            <div class="alias-raffle-heading">
+              <div>
+                <span class="alias-raffle-slug">/r/{{ rifa.slug }}</span>
+                <h3>{{ rifa.titulo }}</h3>
+              </div>
+              <span class="status" [class.status-green]="rifa.estado === 'PUBLICADA'">{{ rifa.estado }}</span>
+            </div>
+
+            <div class="alias-raffle-content">
+              <div class="alias-raffle-dates">
+                <span class="alias-card-label">Fechas</span>
+                <div class="alias-raffle-date-item">
+                  <span>Creada</span>
+                  <strong>{{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }} hs</strong>
+                </div>
+                @if (rifa.fechaFinalizacion) {
+                  <div class="alias-raffle-date-item completed">
+                    <span>Finalizó</span>
+                    <strong>{{ rifa.fechaFinalizacion | date: 'dd/MM/yyyy HH:mm' }} hs</strong>
+                  </div>
+                } @else {
+                  <div class="alias-raffle-date-item pending">
+                    <span>Finalización</span>
+                    <strong>Aún no finalizó</strong>
+                  </div>
+                }
+              </div>
+
+              <div class="alias-raffle-sales">
+                <span class="alias-card-label">Compras</span>
+                <div class="alias-purchase-counts">
+                  <span><strong>{{ rifa.comprasAprobadas }}</strong> aprobadas</span>
+                  <span><strong>{{ rifa.comprasPendientes }}</strong> pendientes</span>
+                  <span><strong>{{ rifa.comprasCanceladas }}</strong> canceladas</span>
+                </div>
+              </div>
+
+              <div class="alias-raffle-revenue">
+                <span class="alias-card-label">Recaudación</span>
+                <strong>{{ rifa.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+                <small>Aprobada</small>
+              </div>
+            </div>
+
+            <div class="alias-raffle-actions">
+              <a class="small-button" [routerLink]="['/admin/rifas', rifa.id]">Ver detalle</a>
+            </div>
+          </article>
+        } @empty {
+          <div class="alias-raffle-empty">
+            <strong>Sin resultados</strong>
+            <span>{{ filtroFechaActivo() ? 'No hay rifas finalizadas en el período seleccionado.' : 'No hay rifas para este filtro.' }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</section>

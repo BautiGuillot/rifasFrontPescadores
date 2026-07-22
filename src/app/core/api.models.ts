@@ -39,6 +39,8 @@ export interface RifaResumen {
   aclaracionSorteo?: string;
   cantidadNumeros: number;
   cantidadFilas: number;
+  numerosPorFila: number;
+  numeroInicial: number;
   cantidadGanadores: number;
   valorNumero: number;
   aliasCobroId?: number;
@@ -66,7 +68,8 @@ export interface CrearRifaRequest {
   descripcion: string;
   aclaracionSorteo?: string;
   cantidadNumeros: number;
-  cantidadFilas: number;
+  numerosPorFila: number;
+  numeroInicial: number;
   cantidadGanadores: number;
   valorNumero: number;
   aliasCobroId?: number;
@@ -80,7 +83,6 @@ export interface Compra {
   rifaId: number;
   rifaTitulo: string;
   nombre: string;
-  dni: string;
   telefono: string;
   numeros: string[];
   total: number;
@@ -179,6 +181,7 @@ export interface AliasCobro {
   activo: boolean;
   fechaCreacion: string;
   rifasAsociadas: number;
+  rifasFinalizadas: number;
   comprasAprobadas: number;
   recaudacionAprobada: number;
 }
@@ -191,6 +194,7 @@ export interface AliasCobroRifa {
   valorNumero: number;
   fechaCreacion: string;
   fechaSorteo?: string;
+  fechaFinalizacion?: string;
   comprasPendientes: number;
   comprasAprobadas: number;
   comprasCanceladas: number;

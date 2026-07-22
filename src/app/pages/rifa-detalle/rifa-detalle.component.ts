@@ -32,7 +32,6 @@ export class RifaDetalleComponent implements OnDestroy {
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    dni: ['', Validators.required],
     telefono: ['', [Validators.required, Validators.pattern(VALIDACION_CELULAR_ARGENTINA)]],
   });
 
@@ -136,6 +135,23 @@ export class RifaDetalleComponent implements OnDestroy {
 
   mediaUrl(url?: string | null): string {
     return this.api.mediaUrl(url);
+  }
+
+  irACompra(): void {
+    document.getElementById('datos-compra')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  etiquetaPremio(posicion: number): string {
+    if (posicion === 1) {
+      return '1er premio';
+    }
+    if (posicion === 2) {
+      return '2do premio';
+    }
+    if (posicion === 3) {
+      return '3er premio';
+    }
+    return `${posicion}° premio`;
   }
 
   cargarComprobante(event: Event): void {

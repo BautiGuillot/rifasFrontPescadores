@@ -12,7 +12,7 @@
     <p class="empty">Todavía no hay rifas finalizadas.</p>
   } @else {
     <div class="table-panel">
-      <table>
+      <table class="responsive-table">
         <thead>
           <tr>
             <th>Rifa</th>
@@ -23,12 +23,12 @@
         <tbody>
           @for (rifa of rifas(); track rifa.id) {
             <tr>
-              <td>
+              <td data-label="Rifa">
                 <strong>{{ rifa.titulo }}</strong>
                 <span>{{ rifa.descripcion }}</span>
               </td>
-              <td>{{ rifa.fechaSorteo ? (rifa.fechaSorteo | date: 'dd/MM/yyyy') : 'A definir' }}</td>
-              <td>
+              <td data-label="Sorteo">{{ rifa.fechaSorteo ? (rifa.fechaSorteo | date: 'dd/MM/yyyy') : 'A definir' }}</td>
+              <td data-label="Ganadores">
                 <div class="winner-list">
                   @for (ganador of rifa.ganadores; track ganador.posicion) {
                     <span>{{ ganador.posicion }}º {{ ganador.numero }} - {{ ganador.nombreComprador }}</span>

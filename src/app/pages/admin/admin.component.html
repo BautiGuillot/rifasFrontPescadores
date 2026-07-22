@@ -66,7 +66,7 @@
       </form>
 
       <div class="table-panel">
-        <table>
+        <table class="responsive-table">
           <thead>
             <tr>
               <th>Cliente</th>
@@ -79,8 +79,8 @@
           <tbody>
             @for (cliente of clientes(); track cliente.id) {
               <tr>
-                <td><strong>{{ cliente.nombre }}</strong><span>{{ cliente.slug }}</span></td>
-                <td>
+                <td data-label="Cliente"><strong>{{ cliente.nombre }}</strong><span>{{ cliente.slug }}</span></td>
+                <td data-label="Marca">
                   <span class="brand-preview">
                     @if (cliente.logoUrl) {
                       <img [src]="mediaUrl(cliente.logoUrl)" alt="" />
@@ -89,12 +89,15 @@
                     {{ cliente.colorPrincipal }}
                   </span>
                 </td>
-                <td>{{ cliente.username }}</td>
-                <td><span class="status">{{ cliente.estado }}</span></td>
-                <td class="actions">
+                <td data-label="Usuario">{{ cliente.username }}</td>
+                <td data-label="Estado"><span class="status">{{ cliente.estado }}</span></td>
+                <td data-label="Acciones" class="actions">
                   <button type="button" (click)="editarCliente(cliente)">Editar</button>
                   <button type="button" (click)="cambiarEstadoCliente(cliente)">
                     {{ cliente.estado === 'ACTIVO' ? 'Inactivar' : 'Activar' }}
+                  </button>
+                  <button type="button" class="danger" (click)="eliminarCliente(cliente)">
+                    Eliminar
                   </button>
                 </td>
               </tr>
@@ -183,11 +186,33 @@
             <span class="field-hint">Explicá cómo y cuándo se realizará el sorteo para que el comprador lo vea en la rifa.</span>
           </label>
           <div class="form-grid">
-            <label>Números sorteo <input type="number" formControlName="cantidadNumeros" /></label>
-            <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>
+            <label>Total de números <input type="number" formControlName="cantidadNumeros" /></label>
+            <label>Números por fila <input type="number" formControlName="numerosPorFila" /></label>
+            <label>
+              La numeración comienza en
+              <select formControlName="numeroInicial">
+                <option [ngValue]="0">00</option>
+                <option [ngValue]="1">01</option>
+              </select>
+            </label>
             <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
             <label>Valor <input type="number" formControlName="valorNumero" /></label>
           </div>
+          @if (vistaPreviaNumeros(); as vista) {
+            <div class="number-config-preview">
+              <div>
+                <span>Se generarán</span>
+                <strong>{{ vista.cantidadFilas }} filas con {{ form.controls.numerosPorFila.value }} números cada una</strong>
+              </div>
+              <div class="number-preview-rows">
+                @for (fila of vista.filas; track $index) {
+                  <code>{{ fila }}</code>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="alert compact-alert">El total debe ser divisible por los números incluidos en cada fila.</p>
+          }
           <label>
             Alias de cobro
             <select formControlName="aliasCobroId">
@@ -241,7 +266,7 @@
 
     <div>
       <div class="table-panel">
-        <table>
+        <table class="responsive-table">
           <thead>
             <tr>
               <th>Rifa</th>
@@ -253,16 +278,16 @@
           <tbody>
             @for (rifa of rifasFiltradas(); track rifa.id) {
               <tr>
-                <td>
+                <td data-label="Rifa">
                   <strong>{{ rifa.titulo }}</strong>
                   <span>{{ rifa.cantidadNumeros }} números en {{ rifa.cantidadFilas }} filas</span>
                   <span>Alias: {{ aliasRifa(rifa) }}</span>
                   <span>Creada: {{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</span>
                   <span>Link: /r/{{ rifa.slug }}</span>
                 </td>
-                <td><span class="status">{{ rifa.estado }}</span></td>
-                <td>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
-                <td class="actions">
+                <td data-label="Estado"><span class="status">{{ rifa.estado }}</span></td>
+                <td data-label="Valor">{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+                <td data-label="Acciones" class="actions">
                   <a class="small-button" [routerLink]="['/admin/rifas', rifa.id]">Ver</a>
                   <button type="button" (click)="copiarLinkRifa(rifa)">Copiar link</button>
                   @if (rifa.estado === 'BORRADOR') {
@@ -298,7 +323,7 @@
       <button type="button" [class.active]="compraFiltro() === ''" (click)="cargarCompras('')">Todas</button>
     </div>
     <div class="table-panel">
-      <table>
+      <table class="responsive-table">
         <thead>
           <tr>
             <th>Cliente</th>
@@ -313,10 +338,10 @@
         <tbody>
           @for (compra of compras(); track compra.id) {
             <tr>
-              <td><strong>{{ compra.nombre }}</strong><span>DNI {{ compra.dni }} · {{ compra.telefono }}</span></td>
-              <td>{{ compra.rifaTitulo }}</td>
-              <td>{{ compra.numeros.join(', ') }}</td>
-              <td>
+              <td data-label="Cliente"><strong>{{ compra.nombre }}</strong><span>{{ compra.telefono }}</span></td>
+              <td data-label="Rifa">{{ compra.rifaTitulo }}</td>
+              <td data-label="Números">{{ compra.numeros.join(', ') }}</td>
+              <td data-label="Comprobante">
                 @if (compra.comprobanteArchivo) {
                   <span class="status">Archivo</span>
                   <button type="button" class="small-button" (click)="abrirComprobante(compra)">Ver</button>
@@ -331,9 +356,9 @@
                   <span class="alert compact-alert">Falló automático</span>
                 }
               </td>
-              <td>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
-              <td><span class="status">{{ compra.estado }}</span></td>
-              <td class="actions">
+              <td data-label="Total">{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+              <td data-label="Estado"><span class="status">{{ compra.estado }}</span></td>
+              <td data-label="Acciones" class="actions">
                 <a class="small-button" [href]="whatsappUrl(compra.telefono)" target="_blank" rel="noopener">WhatsApp</a>
                 @if (compra.estado === 'PENDIENTE_PAGO') {
                   <button type="button" (click)="aprobarCompra(compra.id)">Aprobar</button>
@@ -373,12 +398,12 @@
       </form>
 
       <div class="table-panel">
-        <table>
+        <table class="responsive-table">
           <thead>
             <tr>
               <th>Alias</th>
               <th>Datos</th>
-              <th>Rifas</th>
+              <th>Rifas finalizadas</th>
               <th>Compras aprobadas</th>
               <th>Recaudación</th>
               <th>Estado</th>
@@ -388,21 +413,23 @@
           <tbody>
             @for (alias of aliases(); track alias.id) {
               <tr>
-                <td><strong>{{ alias.nombre }}</strong><span>{{ alias.alias }}</span></td>
-                <td>
+                <td data-label="Alias"><strong>{{ alias.nombre }}</strong><span>{{ alias.alias }}</span></td>
+                <td data-label="Datos">
                   <span>{{ alias.entidad || 'Sin entidad' }}</span>
                   <span>{{ alias.titular || 'Sin titular' }}</span>
                   @if (alias.cbuCvu) {
                     <span>{{ alias.cbuCvu }}</span>
                   }
                 </td>
-                <td>{{ alias.rifasAsociadas }}</td>
-                <td>{{ alias.comprasAprobadas }}</td>
-                <td>{{ alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
-                <td><span class="status">{{ alias.activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
-                <td class="actions">
-                  <button type="button" (click)="verAlias(alias)">Ver</button>
-                  <button type="button" (click)="editarAlias(alias)">Editar</button>
+                <td data-label="Rifas finalizadas">
+                  <strong>{{ alias.rifasFinalizadas }}</strong>
+                  <span>de {{ alias.rifasAsociadas }} asignadas</span>
+                </td>
+                <td data-label="Compras aprobadas">{{ alias.comprasAprobadas }}</td>
+                <td data-label="Recaudación">{{ alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+                <td data-label="Estado"><span class="status">{{ alias.activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
+                <td data-label="Acciones" class="actions">
+                  <a class="small-button" [routerLink]="['/admin/alias', alias.id]">Ver</a>
                   <button type="button" (click)="cambiarEstadoAlias(alias)">
                     {{ alias.activo ? 'Inactivar' : 'Activar' }}
                   </button>
@@ -415,76 +442,6 @@
         </table>
       </div>
     </div>
-
-    @if (cargandoAliasDetalle()) {
-      <div class="modal-backdrop">
-        <div class="form-panel modal-panel">
-          <p class="muted">Cargando resumen del alias...</p>
-        </div>
-      </div>
-    }
-
-    @if (aliasDetalle(); as detalle) {
-      <div class="modal-backdrop">
-        <section class="form-panel modal-panel alias-detail-modal">
-          <div class="panel-title-row">
-            <div>
-              <h2>{{ detalle.alias.nombre }}</h2>
-              <span class="muted">{{ detalle.alias.alias }}</span>
-            </div>
-            <button type="button" class="small-button" (click)="cerrarDetalleAlias()">Cerrar</button>
-          </div>
-
-          <div class="metric-grid compact-metric-grid">
-            <div class="metric">
-              <span>Rifas asignadas</span>
-              <strong>{{ detalle.alias.rifasAsociadas }}</strong>
-            </div>
-            <div class="metric">
-              <span>Compras aprobadas</span>
-              <strong>{{ detalle.alias.comprasAprobadas }}</strong>
-            </div>
-            <div class="metric">
-              <span>Recaudación aprobada</span>
-              <strong>{{ detalle.alias.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
-            </div>
-          </div>
-
-          <div class="table-panel">
-            <table>
-              <thead>
-                <tr>
-                  <th>Rifa</th>
-                  <th>Estado</th>
-                  <th>Compras</th>
-                  <th>Recaudación</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (rifa of detalle.rifas; track rifa.id) {
-                  <tr>
-                    <td>
-                      <strong>{{ rifa.titulo }}</strong>
-                      <span>Link: /r/{{ rifa.slug }}</span>
-                      <span>Creada: {{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</span>
-                    </td>
-                    <td><span class="status">{{ rifa.estado }}</span></td>
-                    <td>
-                      <span>Aprobadas: {{ rifa.comprasAprobadas }}</span>
-                      <span>Pendientes: {{ rifa.comprasPendientes }}</span>
-                      <span>Canceladas: {{ rifa.comprasCanceladas }}</span>
-                    </td>
-                    <td>{{ rifa.recaudacionAprobada | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="4">Este alias todavía no tiene rifas asignadas.</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-    }
   }
 
   @if (tab() === 'marca') {

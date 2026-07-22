@@ -55,11 +55,33 @@
           <span class="field-hint">Explica como y cuando se realizara el sorteo.</span>
         </label>
         <div class="form-grid">
-          <label>Numeros sorteo <input type="number" formControlName="cantidadNumeros" /></label>
-          <label>Filas venta <input type="number" formControlName="cantidadFilas" /></label>
+          <label>Total de números <input type="number" formControlName="cantidadNumeros" /></label>
+          <label>Números por fila <input type="number" formControlName="numerosPorFila" /></label>
+          <label>
+            La numeración comienza en
+            <select formControlName="numeroInicial">
+              <option [ngValue]="0">00</option>
+              <option [ngValue]="1">01</option>
+            </select>
+          </label>
           <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
           <label>Valor <input type="number" formControlName="valorNumero" /></label>
         </div>
+        @if (vistaPreviaNumeros(); as vista) {
+          <div class="number-config-preview">
+            <div>
+              <span>Se generarán</span>
+              <strong>{{ vista.cantidadFilas }} filas con {{ formEdicion.controls.numerosPorFila.value }} números cada una</strong>
+            </div>
+            <div class="number-preview-rows">
+              @for (fila of vista.filas; track $index) {
+                <code>{{ fila }}</code>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="alert compact-alert">El total debe ser divisible por los números incluidos en cada fila.</p>
+        }
         <label>
           Alias de cobro
           <select formControlName="aliasCobroId">
@@ -139,6 +161,10 @@
         <div class="metric-grid compact-metric-grid">
           <div class="metric"><span>Números</span><strong>{{ detalle.cantidadNumeros }}</strong></div>
           <div class="metric"><span>Filas</span><strong>{{ detalle.cantidadFilas }}</strong></div>
+          <div class="metric">
+            <span>Valor por fila</span>
+            <strong>{{ detalle.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+          </div>
           <div class="metric alias-metric">
             <span>Alias</span>
             <strong>{{ aliasRifa(detalle) }}</strong>
@@ -214,10 +240,17 @@
               [class.available]="numero.estado === 'DISPONIBLE'"
               [class.pending]="numero.estado === 'PENDIENTE'"
               [class.sold]="numero.estado === 'VENDIDO'"
+              [attr.tabindex]="compradorDeFila(numero.etiqueta) ? 0 : null"
             >
               <strong>{{ numero.etiqueta }}</strong>
               @if (numero.numerosIncluidos.length > 1) {
                 <span>{{ numero.numerosIncluidos.join('-') }}</span>
+              }
+              @if (compradorDeFila(numero.etiqueta); as comprador) {
+                <span class="number-buyer-tooltip" role="tooltip">
+                  <strong>{{ comprador.nombre }}</strong>
+                  <small>{{ comprador.estado === 'APROBADA' ? 'Compra aprobada' : 'Pago pendiente' }}</small>
+                </span>
               }
             </div>
           }
@@ -267,7 +300,7 @@
           </button>
         </div>
       </div>
-      <table>
+      <table class="responsive-table">
         <thead>
           <tr>
             <th>Cliente</th>
@@ -281,9 +314,9 @@
         <tbody>
           @for (compra of comprasFiltradas(); track compra.id) {
             <tr>
-              <td><strong>{{ compra.nombre }}</strong><span>DNI {{ compra.dni }} · {{ compra.telefono }}</span></td>
-              <td>{{ compra.numeros.join(', ') }}</td>
-              <td>
+              <td data-label="Cliente"><strong>{{ compra.nombre }}</strong><span>{{ compra.telefono }}</span></td>
+              <td data-label="Números">{{ compra.numeros.join(', ') }}</td>
+              <td data-label="Comprobante">
                 @if (compra.comprobanteArchivo) {
                   <span class="status">Archivo</span>
                   <button type="button" class="small-button" (click)="abrirComprobante(compra)">Ver</button>
@@ -298,9 +331,9 @@
                   <span class="alert compact-alert">Falló automático</span>
                 }
               </td>
-              <td>{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
-              <td><span class="status">{{ compra.estado }}</span></td>
-              <td class="actions">
+              <td data-label="Total">{{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+              <td data-label="Estado"><span class="status">{{ compra.estado }}</span></td>
+              <td data-label="Acciones" class="actions">
                 <a class="small-button" [href]="whatsappUrl(compra.telefono)" target="_blank" rel="noopener">WhatsApp</a>
                 @if (compra.estado === 'PENDIENTE_PAGO') {
                   <button type="button" (click)="aprobarCompra(compra.id)">Aprobar</button>
@@ -313,6 +346,33 @@
           }
         </tbody>
       </table>
+    </section>
+
+    <section class="whatsapp-export-panel">
+      <div class="panel-title-row whatsapp-export-heading">
+        <div>
+          <p class="eyebrow">Difusión</p>
+          <h2>Mensaje para WhatsApp</h2>
+          <p class="muted">
+            Se actualiza cada 15 segundos con las filas aprobadas y pendientes.
+            @if (ultimaActualizacionCompras()) {
+              Última actualización: {{ ultimaActualizacionCompras() | date: 'HH:mm:ss' }}.
+            }
+          </p>
+        </div>
+        <div class="actions whatsapp-export-actions">
+          <button type="button" (click)="actualizarMensajeWhatsApp()">Actualizar</button>
+          <button type="button" (click)="copiarMensajeWhatsApp()">Copiar mensaje</button>
+          <button type="button" class="primary-inline-action" (click)="compartirMensajeWhatsApp()">Abrir en WhatsApp</button>
+        </div>
+      </div>
+      <textarea
+        class="whatsapp-message-preview"
+        rows="18"
+        readonly
+        aria-label="Vista previa del mensaje para WhatsApp"
+        [value]="mensajeWhatsApp()"
+      ></textarea>
     </section>
   }
 </section>

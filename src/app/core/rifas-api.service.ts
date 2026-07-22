@@ -51,11 +51,11 @@ export class RifasApiService {
     return this.http.get<RifaDetalle>(`${this.baseUrl}/rifas/slug/${slug}`);
   }
 
-  comprar(rifaId: number, request: { nombre: string; dni: string; telefono: string; numeros: number[] }) {
+  comprar(rifaId: number, request: { nombre: string; telefono: string; numeros: number[] }) {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/${rifaId}/compras`, request);
   }
 
-  comprarPorSlug(slug: string, request: { nombre: string; dni: string; telefono: string; numeros: number[] }) {
+  comprarPorSlug(slug: string, request: { nombre: string; telefono: string; numeros: number[] }) {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/slug/${slug}/compras`, request);
   }
 
@@ -161,6 +161,10 @@ export class RifasApiService {
     return this.http.patch<Cliente>(`${this.baseUrl}/super-admin/clientes/${id}/estado`, { estado });
   }
 
+  eliminarCliente(id: number) {
+    return this.http.delete<void>(`${this.baseUrl}/super-admin/clientes/${id}`);
+  }
+
   obtenerMiMarca() {
     return this.http.get<Cliente>(`${this.baseUrl}/admin/cliente/marca`);
   }
@@ -189,12 +193,27 @@ export class RifasApiService {
     return this.http.post<MediaResponse>(`${this.baseUrl}/admin/media/premios`, formData);
   }
 
-  listarAliasCobro(soloActivos = false) {
-    return this.http.get<AliasCobro[]>(`${this.baseUrl}/admin/alias-cobro?soloActivos=${soloActivos}`);
+  listarAliasCobro(soloActivos = false, desde?: string, hasta?: string) {
+    const params = new URLSearchParams({ soloActivos: String(soloActivos) });
+    if (desde) {
+      params.set('desde', desde);
+    }
+    if (hasta) {
+      params.set('hasta', hasta);
+    }
+    return this.http.get<AliasCobro[]>(`${this.baseUrl}/admin/alias-cobro?${params.toString()}`);
   }
 
-  detalleAliasCobro(id: number) {
-    return this.http.get<AliasCobroDetalle>(`${this.baseUrl}/admin/alias-cobro/${id}`);
+  detalleAliasCobro(id: number, desde?: string, hasta?: string) {
+    const params = new URLSearchParams();
+    if (desde) {
+      params.set('desde', desde);
+    }
+    if (hasta) {
+      params.set('hasta', hasta);
+    }
+    const query = params.size ? `?${params.toString()}` : '';
+    return this.http.get<AliasCobroDetalle>(`${this.baseUrl}/admin/alias-cobro/${id}${query}`);
   }
 
   crearAliasCobro(request: AliasCobroRequest) {

@@ -7,8 +7,8 @@
         }
         <span>{{ detalle.clienteNombre || 'Administración' }}</span>
       </div>
-      <h1>{{ detalle.titulo }}</h1>
-      <p>{{ detalle.descripcion }}</p>
+      <h1 [title]="detalle.titulo">{{ detalle.titulo }}</h1>
+      <p class="raffle-description" [title]="detalle.descripcion">{{ detalle.descripcion }}</p>
       <p class="state-banner" [class.closed]="detalle.estado !== 'PUBLICADA'">
         Estado: {{ detalle.estado }}
       </p>
@@ -64,7 +64,7 @@
               <option [ngValue]="1">01</option>
             </select>
           </label>
-          <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
+          <label>Ganadores <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" /></label>
           <label>Valor <input type="number" formControlName="valorNumero" /></label>
         </div>
         @if (vistaPreviaNumeros(); as vista) {
@@ -104,21 +104,59 @@
         </label>
 
         <div class="nested-list" formArrayName="premios">
-          @for (premio of premios.controls; track $index) {
-            <div [formGroupName]="$index" class="nested-row prize-row">
-              <input type="number" formControlName="posicion" aria-label="Posicion del premio" />
-              <div class="prize-fields">
-                <input type="text" formControlName="descripcion" placeholder="Descripcion del premio" />
-                <label class="file-action">
-                  {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
-                  <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
-                </label>
+          @for (premio of premios.controls; track $index; let premioIndex = $index) {
+            <div [formGroupName]="premioIndex" class="prize-group">
+              <div class="prize-group-heading">
+                <input type="hidden" formControlName="posicion" />
+                <div>
+                  <strong>Ganador {{ premioIndex + 1 }}</strong>
+                  <span>Opciones para elegir</span>
+                </div>
+                @if (premios.length > 1) {
+                  <button type="button" class="small-button danger" (click)="eliminarGanador(premioIndex)">
+                    Quitar ganador
+                  </button>
+                }
               </div>
-              @if (premio.value.imagenUrl) {
-                <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
-              }
+              <div class="prize-options-editor" formArrayName="opciones">
+                @for (opcion of opcionesPremio(premioIndex).controls; track $index; let opcionIndex = $index) {
+                  <div [formGroupName]="opcionIndex" class="prize-option-row">
+                    <span class="prize-option-number">Opcion {{ opcionIndex + 1 }}</span>
+                    <div class="prize-fields">
+                      <input type="text" formControlName="descripcion" placeholder="Descripcion de la opcion" />
+                      <label class="file-action">
+                        {{ subiendoPremio() === (premioIndex + '-' + opcionIndex) ? 'Subiendo...' : 'Subir imagen' }}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          [disabled]="subiendoPremio() === (premioIndex + '-' + opcionIndex)"
+                          (change)="subirImagenPremio(premioIndex, opcionIndex, $event)"
+                        />
+                      </label>
+                    </div>
+                    @if (opcion.value.imagenUrl) {
+                      <img class="prize-thumb" [src]="mediaUrl(opcion.value.imagenUrl)" alt="" />
+                    }
+                    @if (opcionesPremio(premioIndex).length > 1) {
+                      <button
+                        type="button"
+                        class="small-button danger"
+                        (click)="eliminarOpcionPremio(premioIndex, opcionIndex)"
+                      >
+                        Quitar
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+              <button type="button" class="small-button" (click)="agregarOpcionPremio(premioIndex)">
+                + Agregar opcion
+              </button>
             </div>
           }
+          <button type="button" class="small-button add-winner-button" (click)="agregarGanador()">
+            + Agregar otro ganador y sus premios
+          </button>
         </div>
 
         <button class="primary-action" type="submit" [disabled]="guardandoEdicion()">
@@ -183,14 +221,55 @@
             </summary>
             <div class="public-prizes">
               @for (premio of detalle.premios; track premio.posicion) {
-                <article>
-                  @if (premio.imagenUrl) {
-                    <img [src]="mediaUrl(premio.imagenUrl)" alt="" />
-                  }
-                  <div>
+                <article class="admin-prize-tier">
+                  <div class="admin-prize-tier-heading">
                     <span>Premio {{ premio.posicion }}</span>
-                    <strong>{{ premio.descripcion }}</strong>
+                    @if (premio.opciones.length > 1) {
+                      <small>El ganador puede elegir una opción</small>
+                    }
                   </div>
+                  @if (opcionActual(premio); as opcion) {
+                    <div class="prize-carousel admin-prize-carousel" [class.single-option]="premio.opciones.length === 1">
+                      @if (premio.opciones.length > 1) {
+                        <button
+                          type="button"
+                          class="prize-carousel-control"
+                          (click)="cambiarOpcion(premio, -1)"
+                          [attr.aria-label]="'Ver opción anterior del premio ' + premio.posicion"
+                        >
+                          ‹
+                        </button>
+                      }
+                      <div class="admin-prize-option prize-carousel-content">
+                        @if (opcion.imagenUrl) {
+                          <button
+                            type="button"
+                            class="prize-image-button"
+                            (click)="abrirImagenPremio(opcion.imagenUrl)"
+                            [attr.aria-label]="'Ampliar imagen de ' + opcion.descripcion"
+                          >
+                            <img [src]="mediaUrl(opcion.imagenUrl)" alt="" />
+                          </button>
+                        }
+                        <strong>{{ opcion.descripcion }}</strong>
+                        @if (premio.opciones.length > 1) {
+                          <small class="prize-carousel-count">
+                            Opción {{ numeroOpcionActual(premio) }} de {{ premio.opciones.length }}
+                          </small>
+                        }
+                      </div>
+                      @if (premio.opciones.length > 1) {
+                        <button
+                          type="button"
+                          class="prize-carousel-control"
+                          (click)="cambiarOpcion(premio, 1)"
+                          [attr.aria-label]="'Ver opción siguiente del premio ' + premio.posicion"
+                        >
+                          ›
+                        </button>
+                      }
+                    </div>
+                  }
                 </article>
               }
             </div>
@@ -242,10 +321,9 @@
               [class.sold]="numero.estado === 'VENDIDO'"
               [attr.tabindex]="compradorDeFila(numero.etiqueta) ? 0 : null"
             >
-              <strong>{{ numero.etiqueta }}</strong>
-              @if (numero.numerosIncluidos.length > 1) {
-                <span>{{ numero.numerosIncluidos.join('-') }}</span>
-              }
+              <strong>
+                {{ numero.numerosIncluidos.length > 1 ? numero.numerosIncluidos.join('-') : numero.etiqueta }}
+              </strong>
               @if (compradorDeFila(numero.etiqueta); as comprador) {
                 <span class="number-buyer-tooltip" role="tooltip">
                   <strong>{{ comprador.nombre }}</strong>
@@ -338,6 +416,9 @@
                 @if (compra.estado === 'PENDIENTE_PAGO') {
                   <button type="button" (click)="aprobarCompra(compra.id)">Aprobar</button>
                   <button type="button" class="danger" (click)="cancelarCompra(compra.id)">Cancelar</button>
+                } @else if (compra.estado === 'APROBADA') {
+                  <button type="button" (click)="volverCompraAPendiente(compra.id)">Volver a pendiente</button>
+                  <button type="button" class="danger" (click)="cancelarCompra(compra.id)">Cancelar</button>
                 }
               </td>
             </tr>
@@ -376,3 +457,18 @@
     </section>
   }
 </section>
+
+@if (imagenAmpliadaUrl(); as imagenUrl) {
+  <div class="image-modal-backdrop" role="presentation" (click)="cerrarImagenAmpliada()">
+    <section
+      class="image-modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Imagen ampliada del premio"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" class="image-modal-close" (click)="cerrarImagenAmpliada()" aria-label="Cerrar imagen">×</button>
+      <img [src]="mediaUrl(imagenUrl)" alt="Imagen ampliada del premio" />
+    </section>
+  </div>
+}

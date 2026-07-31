@@ -59,23 +59,30 @@ export class RifasApiService {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/slug/${slug}/compras`, request);
   }
 
-  cargarComprobante(compraId: number, archivo: File) {
+  cargarComprobante(compraId: number, token: string, archivo: File) {
     const formData = new FormData();
     formData.append('archivo', archivo);
-    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/comprobante`, formData);
+    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/comprobante`, formData, {
+      headers: { 'X-Compra-Token': token },
+    });
   }
 
-  marcarComprobanteWhatsapp(compraId: number) {
-    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/comprobante-whatsapp`, {});
+  marcarComprobanteWhatsapp(compraId: number, token: string) {
+    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/comprobante-whatsapp`, {}, {
+      headers: { 'X-Compra-Token': token },
+    });
   }
 
-  expirarCompra(compraId: number) {
-    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/expirar`, {});
+  expirarCompra(compraId: number, token: string) {
+    return this.http.post<Compra>(`${this.baseUrl}/rifas/compras/${compraId}/expirar`, {}, {
+      headers: { 'X-Compra-Token': token },
+    });
   }
 
   seguimientoCompra(compraId: number, token: string) {
     return this.http.get<CompraSeguimiento>(
-      `${this.baseUrl}/rifas/compras/${compraId}/seguimiento?token=${encodeURIComponent(token)}`,
+      `${this.baseUrl}/rifas/compras/${compraId}/seguimiento`,
+      { headers: { 'X-Compra-Token': token } },
     );
   }
 
@@ -130,6 +137,10 @@ export class RifasApiService {
 
   cancelarCompra(id: number) {
     return this.http.patch<Compra>(`${this.baseUrl}/admin/compras/${id}/cancelar`, {});
+  }
+
+  actualizarEstadoCompra(id: number, estado: EstadoCompra) {
+    return this.http.patch<Compra>(`${this.baseUrl}/admin/compras/${id}/estado`, { estado });
   }
 
   descargarComprobante(id: number) {

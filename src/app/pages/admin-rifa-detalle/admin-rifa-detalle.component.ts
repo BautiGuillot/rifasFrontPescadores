@@ -3,7 +3,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AliasCobro, Compra, EstadoCompra, RifaDetalle } from '../../core/api.models';
+import { AliasCobro, Compra, EstadoCompra, Premio, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
 import { vistaPreviaNumeracion } from '../../core/numeracion-rifa';
 import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
@@ -28,7 +28,9 @@ export class AdminRifaDetalleComponent {
   readonly error = signal('');
   readonly edicionAbierta = signal(false);
   readonly guardandoEdicion = signal(false);
-  readonly subiendoPremio = signal<number | null>(null);
+  readonly subiendoPremio = signal<string | null>(null);
+  readonly opcionesActivas = signal<Record<number, number>>({});
+  readonly imagenAmpliadaUrl = signal<string | null>(null);
   readonly ultimaActualizacionCompras = signal<Date | null>(null);
   readonly aliases = signal<AliasCobro[]>([]);
   readonly formEdicion = this.fb.nonNullable.group({
@@ -66,7 +68,7 @@ export class AdminRifaDetalleComponent {
       .sort((a, b) => a.fechaCreacion.localeCompare(b.fechaCreacion))
       .forEach((compra) => {
         compra.numeros.forEach((numeroCompra) => {
-          const etiqueta = numeroCompra.split(' (', 1)[0].trim();
+          const etiqueta = numeroCompra.split(/[- (]/, 1)[0].trim();
           compradores.set(etiqueta, { nombre: compra.nombre, estado: compra.estado });
         });
       });
@@ -103,6 +105,64 @@ export class AdminRifaDetalleComponent {
 
   get premios(): FormArray {
     return this.formEdicion.controls.premios;
+  }
+
+  opcionesPremio(premioIndex: number): FormArray {
+    return this.premios.at(premioIndex).get('opciones') as FormArray;
+  }
+
+  agregarOpcionPremio(premioIndex: number): void {
+    this.opcionesPremio(premioIndex).push(this.crearOpcionPremio());
+  }
+
+  eliminarOpcionPremio(premioIndex: number, opcionIndex: number): void {
+    const opciones = this.opcionesPremio(premioIndex);
+    if (opciones.length > 1) {
+      opciones.removeAt(opcionIndex);
+    }
+  }
+
+  agregarGanador(): void {
+    const posicion = this.premios.length + 1;
+    this.premios.push(this.crearPremio(posicion));
+    this.formEdicion.controls.cantidadGanadores.setValue(posicion);
+  }
+
+  eliminarGanador(premioIndex: number): void {
+    if (this.premios.length <= 1) {
+      return;
+    }
+    this.premios.removeAt(premioIndex);
+    this.formEdicion.controls.cantidadGanadores.setValue(this.premios.length);
+    this.reindexarPremios();
+  }
+
+  opcionActual(premio: Premio): Premio['opciones'][number] | undefined {
+    return premio.opciones[this.indiceOpcionActiva(premio.posicion, premio.opciones.length)];
+  }
+
+  numeroOpcionActual(premio: Premio): number {
+    return this.indiceOpcionActiva(premio.posicion, premio.opciones.length) + 1;
+  }
+
+  cambiarOpcion(premio: Premio, direccion: -1 | 1): void {
+    const total = premio.opciones.length;
+    if (total < 2) {
+      return;
+    }
+    const actual = this.indiceOpcionActiva(premio.posicion, total);
+    this.opcionesActivas.update((opciones) => ({
+      ...opciones,
+      [premio.posicion]: (actual + direccion + total) % total,
+    }));
+  }
+
+  abrirImagenPremio(url: string): void {
+    this.imagenAmpliadaUrl.set(url);
+  }
+
+  cerrarImagenAmpliada(): void {
+    this.imagenAmpliadaUrl.set(null);
   }
 
   linkPublicoRifa(rifa: RifaDetalle): string {
@@ -182,6 +242,16 @@ export class AdminRifaDetalleComponent {
     this.api.cancelarCompra(id).subscribe(() => this.cargarDetalle());
   }
 
+  volverCompraAPendiente(id: number): void {
+    if (!confirm('¿Volver esta compra a pendiente? Los números quedarán reservados para el comprador.')) {
+      return;
+    }
+    this.api.actualizarEstadoCompra(id, 'PENDIENTE_PAGO').subscribe({
+      next: () => this.cargarDetalle(),
+      error: (error) => this.error.set(error.error?.message || 'No se pudo volver la compra a pendiente.'),
+    });
+  }
+
   publicar(rifa: RifaDetalle): void {
     if (!confirm('¿Publicar esta rifa? Quedará visible para los clientes.')) {
       return;
@@ -231,7 +301,14 @@ export class AdminRifaDetalleComponent {
     this.premios.clear();
     rifa.premios.forEach((premio) => {
       const control = this.crearPremio(premio.posicion);
-      control.patchValue({ descripcion: premio.descripcion, imagenUrl: premio.imagenUrl || '' });
+      const opciones = control.controls.opciones;
+      opciones.clear();
+      (premio.opciones?.length
+        ? premio.opciones
+        : [{ descripcion: premio.descripcion, imagenUrl: premio.imagenUrl }]
+      ).forEach((opcion) => {
+        opciones.push(this.crearOpcionPremio(opcion.descripcion, opcion.imagenUrl || ''));
+      });
       this.premios.push(control);
     });
     this.api.listarAliasCobro().subscribe({
@@ -251,25 +328,28 @@ export class AdminRifaDetalleComponent {
   }
 
   sincronizarPremios(): void {
-    const cantidad = this.formEdicion.controls.cantidadGanadores.value;
+    const cantidad = Math.max(1, Math.trunc(Number(this.formEdicion.controls.cantidadGanadores.value) || 1));
+    this.formEdicion.controls.cantidadGanadores.setValue(cantidad, { emitEvent: false });
     while (this.premios.length < cantidad) {
       this.premios.push(this.crearPremio(this.premios.length + 1));
     }
     while (this.premios.length > cantidad) {
       this.premios.removeAt(this.premios.length - 1);
     }
+    this.reindexarPremios();
   }
 
-  subirImagenPremio(index: number, event: Event): void {
+  subirImagenPremio(premioIndex: number, opcionIndex: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0];
     if (!archivo) {
       return;
     }
-    this.subiendoPremio.set(index);
+    const claveCarga = `${premioIndex}-${opcionIndex}`;
+    this.subiendoPremio.set(claveCarga);
     this.api.subirImagenPremio(archivo).subscribe({
       next: (media) => {
-        this.premios.at(index).patchValue({ imagenUrl: media.url });
+        this.opcionesPremio(premioIndex).at(opcionIndex).patchValue({ imagenUrl: media.url });
         this.subiendoPremio.set(null);
       },
       error: (error) => {
@@ -304,6 +384,19 @@ export class AdminRifaDetalleComponent {
       aliasCobroId: alias.id,
       aliasTransferencia: alias.alias,
       whatsappComprobante: normalizarCelularArgentino(raw.whatsappComprobante),
+      premios: raw.premios.map((premio) => {
+        const opciones = premio.opciones.map((opcion, indice) => ({
+          orden: indice + 1,
+          descripcion: opcion.descripcion,
+          imagenUrl: opcion.imagenUrl || undefined,
+        }));
+        return {
+          posicion: premio.posicion,
+          descripcion: opciones[0]?.descripcion || '',
+          imagenUrl: opciones[0]?.imagenUrl,
+          opciones,
+        };
+      }),
     };
     this.guardandoEdicion.set(true);
     this.api.editarRifa(rifa.id, payload).subscribe({
@@ -408,11 +501,13 @@ export class AdminRifaDetalleComponent {
     const premios = [...rifa.premios]
       .sort((a, b) => a.posicion - b.posicion)
       .map((premio) => {
-        const descripcion = premio.descripcion
-          .split(/\r?\n/)
-          .map((linea) => linea.trim())
+        const opciones = premio.opciones?.length
+          ? premio.opciones
+          : [{ descripcion: premio.descripcion }];
+        const descripcion = opciones
+          .map((opcion) => opcion.descripcion.trim())
           .filter(Boolean)
-          .map((linea) => (/^[*•-]/.test(linea) ? linea : `* ${linea}`))
+          .map((opcion) => `* ${opcion}`)
           .join('\n');
         return `PREMIO ${premio.posicion}\n${descripcion}`;
       })
@@ -424,7 +519,7 @@ export class AdminRifaDetalleComponent {
       .sort((a, b) => a.fechaCreacion.localeCompare(b.fechaCreacion))
       .forEach((compra) => {
         compra.numeros.forEach((numeroCompra) => {
-          const etiqueta = numeroCompra.split(' (', 1)[0].trim();
+          const etiqueta = numeroCompra.split(/[- (]/, 1)[0].trim();
           compradoresPorFila.set(etiqueta, compra.nombre.trim());
         });
       });
@@ -469,9 +564,28 @@ export class AdminRifaDetalleComponent {
   private crearPremio(posicion: number) {
     return this.fb.nonNullable.group({
       posicion: [posicion, [Validators.required, Validators.min(1)]],
-      descripcion: ['', Validators.required],
-      imagenUrl: [''],
+      opciones: this.fb.array([this.crearOpcionPremio()]),
     });
+  }
+
+  private crearOpcionPremio(descripcion = '', imagenUrl = '') {
+    return this.fb.nonNullable.group({
+      descripcion: [descripcion, Validators.required],
+      imagenUrl: [imagenUrl],
+    });
+  }
+
+  private reindexarPremios(): void {
+    this.premios.controls.forEach((premio, indice) => {
+      premio.get('posicion')?.setValue(indice + 1, { emitEvent: false });
+    });
+  }
+
+  private indiceOpcionActiva(posicion: number, total: number): number {
+    if (!total) {
+      return 0;
+    }
+    return Math.min(this.opcionesActivas()[posicion] ?? 0, total - 1);
   }
 
   private normalizarSlug(valor: string): string {

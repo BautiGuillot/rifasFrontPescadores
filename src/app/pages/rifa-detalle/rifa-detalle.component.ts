@@ -2,7 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Compra, NumeroRifa, RifaDetalle } from '../../core/api.models';
+import { Compra, NumeroRifa, Premio, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
 import { TenantThemeService } from '../../core/tenant-theme.service';
 import { normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
@@ -26,6 +26,8 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly subiendoComprobante = signal(false);
   readonly marcandoWhatsapp = signal(false);
   readonly segundosRestantes = signal(0);
+  readonly opcionesActivas = signal<Record<number, number>>({});
+  readonly imagenAmpliadaUrl = signal<string | null>(null);
   private cuentaRegresivaId: number | null = null;
   private seguimientoId: number | null = null;
   private readonly slug = this.route.snapshot.paramMap.get('slug');
@@ -51,7 +53,11 @@ export class RifaDetalleComponent implements OnDestroy {
   });
 
   readonly seleccionEtiquetas = computed(() =>
-    this.numerosSeleccionados().map((numero) => numero.etiqueta).join(', '),
+    this.numerosSeleccionados()
+      .map((numero) =>
+        numero.numerosIncluidos.length > 1 ? numero.numerosIncluidos.join('-') : numero.etiqueta,
+      )
+      .join(', '),
   );
 
   readonly compraConComprobante = computed(() => {
@@ -154,16 +160,44 @@ export class RifaDetalleComponent implements OnDestroy {
     return `${posicion}° premio`;
   }
 
+  opcionActual(premio: Premio): Premio['opciones'][number] | undefined {
+    return premio.opciones[this.indiceOpcionActiva(premio.posicion, premio.opciones.length)];
+  }
+
+  numeroOpcionActual(premio: Premio): number {
+    return this.indiceOpcionActiva(premio.posicion, premio.opciones.length) + 1;
+  }
+
+  cambiarOpcion(premio: Premio, direccion: -1 | 1): void {
+    const total = premio.opciones.length;
+    if (total < 2) {
+      return;
+    }
+    const actual = this.indiceOpcionActiva(premio.posicion, total);
+    this.opcionesActivas.update((opciones) => ({
+      ...opciones,
+      [premio.posicion]: (actual + direccion + total) % total,
+    }));
+  }
+
+  abrirImagenPremio(url: string): void {
+    this.imagenAmpliadaUrl.set(url);
+  }
+
+  cerrarImagenAmpliada(): void {
+    this.imagenAmpliadaUrl.set(null);
+  }
+
   cargarComprobante(event: Event): void {
     const compra = this.compra();
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0];
-    if (!compra || !archivo) {
+    if (!compra?.tokenSeguimiento || !archivo) {
       return;
     }
     this.subiendoComprobante.set(true);
     this.comprobanteMensaje.set('');
-    this.api.cargarComprobante(compra.id, archivo).subscribe({
+    this.api.cargarComprobante(compra.id, compra.tokenSeguimiento, archivo).subscribe({
       next: (actualizada) => {
         this.compra.set(actualizada);
         this.detenerCuentaRegresiva();
@@ -180,12 +214,12 @@ export class RifaDetalleComponent implements OnDestroy {
 
   marcarComprobanteWhatsapp(): void {
     const compra = this.compra();
-    if (!compra) {
+    if (!compra?.tokenSeguimiento) {
       return;
     }
     this.marcandoWhatsapp.set(true);
     this.comprobanteMensaje.set('');
-    this.api.marcarComprobanteWhatsapp(compra.id).subscribe({
+    this.api.marcarComprobanteWhatsapp(compra.id, compra.tokenSeguimiento).subscribe({
       next: (actualizada) => {
         this.compra.set(actualizada);
         this.detenerCuentaRegresiva();
@@ -226,6 +260,13 @@ export class RifaDetalleComponent implements OnDestroy {
     return normalizarCelularArgentino(numero);
   }
 
+  private indiceOpcionActiva(posicion: number, total: number): number {
+    if (!total) {
+      return 0;
+    }
+    return Math.min(this.opcionesActivas()[posicion] ?? 0, total - 1);
+  }
+
   private iniciarCuentaRegresiva(compra: Compra): void {
     this.detenerCuentaRegresiva();
     if (compra.comprobanteArchivo || compra.comprobanteWhatsapp) {
@@ -238,7 +279,7 @@ export class RifaDetalleComponent implements OnDestroy {
       this.segundosRestantes.set(restantes);
       if (restantes === 0) {
         this.detenerCuentaRegresiva();
-        this.expirarCompra(compra.id);
+        this.expirarCompra(compra);
       }
     };
     actualizar();
@@ -299,8 +340,11 @@ export class RifaDetalleComponent implements OnDestroy {
     }
   }
 
-  private expirarCompra(compraId: number): void {
-    this.api.expirarCompra(compraId).subscribe({
+  private expirarCompra(compra: Compra): void {
+    if (!compra.tokenSeguimiento) {
+      return;
+    }
+    this.api.expirarCompra(compra.id, compra.tokenSeguimiento).subscribe({
       next: (actualizada) => {
         this.detenerSeguimiento();
         this.compra.set(null);

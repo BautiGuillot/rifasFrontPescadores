@@ -7,7 +7,7 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 La URL de la API se configura por ambiente:
 
 - Desarrollo: `src/environments/environment.development.ts`
-- Produccion: `src/environments/environment.ts`
+- Produccion: variable de build `API_URL`
 
 En desarrollo apunta a:
 
@@ -15,11 +15,26 @@ En desarrollo apunta a:
 http://localhost:8080/api
 ```
 
-En produccion usa:
+Para generar un build productivo:
 
-```ts
-/api
+```bash
+API_URL=https://tu-backend.onrender.com/api npm run build
 ```
+
+El build falla si `API_URL` no es HTTPS o no termina en `/api`. Para un build
+local sin inyectar una URL se puede usar `npm run build:local`.
+
+## Render
+
+Crear el frontend como **Static Site**:
+
+- Build Command: `npm ci && npm run build`
+- Publish Directory: `dist/frontend/browser`
+- Variable: `API_URL=https://<backend>.onrender.com/api`
+- Rewrite SPA: `/*` hacia `/index.html`
+
+La URL publica exacta del Static Site, sin `/` final, debe configurarse como
+`CORS_ALLOWED_ORIGINS` en el backend.
 
 ## Funcionalidad actual
 

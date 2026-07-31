@@ -4,11 +4,19 @@ export type EstadoCompra = 'PENDIENTE_PAGO' | 'APROBADA' | 'CANCELADA';
 export type EstadoCliente = 'ACTIVO' | 'INACTIVO';
 export type RolUsuario = 'SUPER_ADMIN' | 'CLIENTE_ADMIN';
 
+export interface PremioOpcion {
+  id?: number;
+  orden?: number;
+  descripcion: string;
+  imagenUrl?: string;
+}
+
 export interface Premio {
   id?: number;
   posicion: number;
   descripcion: string;
   imagenUrl?: string;
+  opciones: PremioOpcion[];
 }
 
 export interface Ganador {

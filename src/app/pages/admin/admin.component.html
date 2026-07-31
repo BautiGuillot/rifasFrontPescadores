@@ -28,7 +28,7 @@
           <label>Color <input type="color" formControlName="colorPrincipal" /></label>
           <label class="file-action">
             {{ subiendoLogoCliente() ? 'Subiendo logo...' : 'Subir logo' }}
-            <input type="file" accept="image/*" [disabled]="subiendoLogoCliente()" (change)="seleccionarLogoCliente($event)" />
+            <input type="file" accept="image/jpeg,image/png,image/webp" [disabled]="subiendoLogoCliente()" (change)="seleccionarLogoCliente($event)" />
           </label>
         </div>
         @if (logoClienteArchivo()) {
@@ -155,18 +155,18 @@
   @if (tab() === 'rifas') {
     <div class="toolbar table-toolbar">
       <button type="button" class="primary-inline-action" (click)="abrirCrearRifa()">Crear rifa</button>
-      <button type="button" [class.active]="rifaFiltro() === ''" (click)="cambiarFiltroRifas('')">Todas</button>
       <button type="button" [class.active]="rifaFiltro() === 'BORRADOR'" (click)="cambiarFiltroRifas('BORRADOR')">Borrador</button>
       <button type="button" [class.active]="rifaFiltro() === 'PUBLICADA'" (click)="cambiarFiltroRifas('PUBLICADA')">Publicadas</button>
       <button type="button" [class.active]="rifaFiltro() === 'FINALIZADA'" (click)="cambiarFiltroRifas('FINALIZADA')">Finalizadas</button>
       <button type="button" [class.active]="rifaFiltro() === 'CANCELADA'" (click)="cambiarFiltroRifas('CANCELADA')">Canceladas</button>
+      <button type="button" [class.active]="rifaFiltro() === ''" (click)="cambiarFiltroRifas('')">Todas</button>
     </div>
 
     @if (modalRifaAbierto()) {
       <div class="modal-backdrop">
         <form class="form-panel modal-panel" [formGroup]="form" (ngSubmit)="guardarRifa()">
           <div class="panel-title-row">
-            <h2>{{ editandoRifaId() ? 'Editar rifa' : 'Nueva rifa' }}</h2>
+            <h2>{{ editandoRifaId() ? 'Editar rifa' : rifaOrigenTitulo() ? 'Nueva rifa a partir de otra' : 'Nueva rifa' }}</h2>
             <button type="button" class="small-button" (click)="cancelarEdicion()">Cerrar</button>
           </div>
           <label>Título <input type="text" formControlName="titulo" /></label>
@@ -195,7 +195,7 @@
                 <option [ngValue]="1">01</option>
               </select>
             </label>
-            <label>Ganadores <input type="number" formControlName="cantidadGanadores" (change)="sincronizarPremios()" /></label>
+            <label>Ganadores <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" /></label>
             <label>Valor <input type="number" formControlName="valorNumero" /></label>
           </div>
           @if (vistaPreviaNumeros(); as vista) {
@@ -236,21 +236,61 @@
           </label>
 
           <div class="nested-list" formArrayName="premios">
-            @for (premio of premios.controls; track $index) {
-              <div [formGroupName]="$index" class="nested-row prize-row">
-                <input type="number" formControlName="posicion" aria-label="Posición premio" />
-                <div class="prize-fields">
-                  <input type="text" formControlName="descripcion" placeholder="Descripción del premio" />
-                  <label class="file-action">
-                    {{ subiendoPremio() === $index ? 'Subiendo...' : 'Subir imagen' }}
-                    <input type="file" accept="image/*" [disabled]="subiendoPremio() === $index" (change)="subirImagenPremio($index, $event)" />
-                  </label>
+            @for (premio of premios.controls; track $index; let premioIndex = $index) {
+              <div [formGroupName]="premioIndex" class="prize-group">
+                <div class="prize-group-heading">
+                  <input type="hidden" formControlName="posicion" />
+                  <div>
+                    <strong>Ganador {{ premioIndex + 1 }}</strong>
+                    <span>Opciones para elegir</span>
+                  </div>
+                  @if (premios.length > 1) {
+                    <button type="button" class="small-button danger" (click)="eliminarGanador(premioIndex)">
+                      Quitar ganador
+                    </button>
+                  }
                 </div>
-                @if (premio.value.imagenUrl) {
-                  <img class="prize-thumb" [src]="mediaUrl(premio.value.imagenUrl)" alt="" />
-                }
+                <div class="prize-options-editor" formArrayName="opciones">
+                  @for (opcion of opcionesPremio(premioIndex).controls; track $index; let opcionIndex = $index) {
+                    <div [formGroupName]="opcionIndex" class="prize-option-row">
+                      <span class="prize-option-number">Opción {{ opcionIndex + 1 }}</span>
+                      <div class="prize-fields">
+                        <input type="text" formControlName="descripcion" placeholder="Descripción de la opción" />
+                        <label class="file-action">
+                          {{ subiendoPremio() === (premioIndex + '-' + opcionIndex) ? 'Subiendo...' : 'Subir imagen' }}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            [disabled]="subiendoPremio() === (premioIndex + '-' + opcionIndex)"
+                            (change)="subirImagenPremio(premioIndex, opcionIndex, $event)"
+                          />
+                        </label>
+                      </div>
+                      @if (opcion.value.imagenUrl) {
+                        <img class="prize-thumb" [src]="mediaUrl(opcion.value.imagenUrl)" alt="" />
+                      }
+                      @if (opcionesPremio(premioIndex).length > 1) {
+                        <button
+                          type="button"
+                          class="small-button danger"
+                          (click)="eliminarOpcionPremio(premioIndex, opcionIndex)"
+                        >
+                          Quitar
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                <div class="prize-fields">
+                  <button type="button" class="small-button" (click)="agregarOpcionPremio(premioIndex)">
+                    + Agregar opción
+                  </button>
+                </div>
               </div>
             }
+            <button type="button" class="small-button add-winner-button" (click)="agregarGanador()">
+              + Agregar otro ganador y sus premios
+            </button>
           </div>
 
           @if (errorRifa()) {
@@ -266,7 +306,7 @@
 
     <div>
       <div class="table-panel">
-        <table class="responsive-table">
+        <table class="responsive-table admin-rifas-table">
           <thead>
             <tr>
               <th>Rifa</th>
@@ -279,7 +319,7 @@
             @for (rifa of rifasFiltradas(); track rifa.id) {
               <tr>
                 <td data-label="Rifa">
-                  <strong>{{ rifa.titulo }}</strong>
+                  <strong [title]="rifa.titulo">{{ rifa.titulo }}</strong>
                   <span>{{ rifa.cantidadNumeros }} números en {{ rifa.cantidadFilas }} filas</span>
                   <span>Alias: {{ aliasRifa(rifa) }}</span>
                   <span>Creada: {{ rifa.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</span>
@@ -290,6 +330,7 @@
                 <td data-label="Acciones" class="actions">
                   <a class="small-button" [routerLink]="['/admin/rifas', rifa.id]">Ver</a>
                   <button type="button" (click)="copiarLinkRifa(rifa)">Copiar link</button>
+                  <button type="button" (click)="crearRifaDesde(rifa)">Duplicar rifa</button>
                   @if (rifa.estado === 'BORRADOR') {
                     <button type="button" (click)="editar(rifa)">Editar</button>
                     <button type="button" (click)="publicar(rifa.id)">Publicar</button>
@@ -362,6 +403,9 @@
                 <a class="small-button" [href]="whatsappUrl(compra.telefono)" target="_blank" rel="noopener">WhatsApp</a>
                 @if (compra.estado === 'PENDIENTE_PAGO') {
                   <button type="button" (click)="aprobarCompra(compra.id)">Aprobar</button>
+                  <button type="button" class="danger" (click)="cancelarCompra(compra.id)">Cancelar</button>
+                } @else if (compra.estado === 'APROBADA') {
+                  <button type="button" (click)="volverCompraAPendiente(compra.id)">Volver a pendiente</button>
                   <button type="button" class="danger" (click)="cancelarCompra(compra.id)">Cancelar</button>
                 }
               </td>
@@ -451,7 +495,7 @@
         <label>Color principal <input type="color" formControlName="colorPrincipal" /></label>
         <label class="file-action">
           {{ subiendoLogo() ? 'Subiendo logo...' : 'Subir logo' }}
-          <input type="file" accept="image/*" [disabled]="subiendoLogo()" (change)="subirLogo($event)" />
+          <input type="file" accept="image/jpeg,image/png,image/webp" [disabled]="subiendoLogo()" (change)="subirLogo($event)" />
         </label>
         <div class="settings-block">
           <h3>WhatsApp automático</h3>

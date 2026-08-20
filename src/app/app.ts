@@ -20,7 +20,7 @@ export class App {
   private readonly currentUrl = signal(this.router.url);
 
   readonly homeLink = computed(() => this.auth.isLoggedIn() ? '/admin' : '/login');
-  readonly tenantColor = computed(() => this.theme.publicColor() || this.auth.clienteColor() || '#082d50');
+  readonly tenantColor = computed(() => this.theme.publicColor() || this.auth.clienteColor() || '#2563eb');
   readonly mostrarNavbar = computed(() => {
     const url = this.currentUrl().split('?')[0];
     return !url.startsWith('/r/') && !url.startsWith('/rifas/');

@@ -1,18 +1,40 @@
 @if (rifa(); as rifa) {
   <section class="page-header detail-header branded-rifa-header" [style.--client-color]="colorPrincipal(rifa)">
     <div class="public-raffle-heading">
-      <div class="public-brand">
-        @if (rifa.clienteLogoUrl) {
-          <img [src]="mediaUrl(rifa.clienteLogoUrl)" [alt]="rifa.clienteNombre || 'Logo'" />
-        }
-        <span>{{ rifa.clienteNombre || 'Rifa activa' }}</span>
+      <div class="public-title-row">
+        <div class="public-title-copy">
+          <div class="public-brand">
+            @if (rifa.clienteLogoUrl) {
+              <img [src]="mediaUrl(rifa.clienteLogoUrl)" [alt]="rifa.clienteNombre || 'Logo'" />
+            }
+            <span>{{ rifa.clienteNombre || 'Rifa activa' }}</span>
+          </div>
+          <h1 [title]="rifa.titulo">{{ rifa.titulo }}</h1>
+        </div>
+
+        <div class="price-box">
+          <span>Valor por fila</span>
+          <strong>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+        </div>
       </div>
-      <h1 [title]="rifa.titulo">{{ rifa.titulo }}</h1>
 
       @if (rifa.premios.length) {
-        <div class="public-prize-gallery" aria-label="Premios de la rifa">
+        <div class="public-prizes-heading">
+          <span class="public-section-kicker">Premios</span>
+          <span class="public-prize-count">
+            {{ rifa.premios.length }} {{ rifa.premios.length === 1 ? 'premio' : 'premios' }}
+          </span>
+        </div>
+        <div
+          class="public-prize-gallery"
+          [class.single-prize]="rifa.premios.length === 1"
+          [class.prize-staircase]="rifa.premios.length > 1"
+          [class.two-prizes]="rifa.premios.length === 2"
+          [class.three-prizes]="rifa.premios.length === 3"
+          aria-label="Premios de la rifa"
+        >
           @for (premio of rifa.premios; track premio.posicion) {
-            <article class="public-prize-tier">
+            <article class="public-prize-tier" [attr.data-rank]="premio.posicion">
               <span>{{ etiquetaPremio(premio.posicion) }}</span>
               @if (premio.opciones.length > 1) {
                 <small>Puede elegir una opción</small>
@@ -75,10 +97,6 @@
           <p>{{ rifa.descripcion }}</p>
         </details>
       }
-    </div>
-    <div class="price-box">
-      <span>Valor por fila</span>
-      <strong>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
     </div>
   </section>
 

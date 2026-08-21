@@ -1093,6 +1093,70 @@ label {
   min-height: 18px;
 }
 
+.legal-consent {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid #dbe4ec;
+  border-radius: 12px;
+  padding: 13px 14px;
+  background: #f8fafc;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.legal-consent:focus-within {
+  border-color: var(--brand-blue-900);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue-900) 11%, transparent);
+}
+
+.legal-consent.invalid {
+  border-color: #fca5a5;
+  background: #fff7f7;
+}
+
+.legal-consent > input {
+  width: 19px;
+  height: 19px;
+  min-height: 19px;
+  margin: 2px 0 0;
+  accent-color: var(--brand-blue-900);
+}
+
+.legal-consent p {
+  margin: 0;
+  color: #526171;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.legal-consent label {
+  display: inline;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.legal-consent button {
+  display: inline;
+  margin: 0 2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--brand-blue-900);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.legal-consent button:hover {
+  color: color-mix(in srgb, var(--brand-blue-900) 78%, #0f172a);
+}
+
 input,
 textarea,
 select {
@@ -1918,6 +1982,104 @@ td span {
   cursor: pointer;
 }
 
+.legal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(7px);
+}
+
+.legal-modal-panel {
+  width: min(680px, 100%);
+  max-height: min(820px, calc(100dvh - 48px));
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+}
+
+.legal-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 18px;
+}
+
+.legal-modal-header span {
+  color: var(--brand-blue-900);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.legal-modal-header h2 {
+  margin: 5px 0 0;
+  color: #0f172a;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.legal-modal-close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #dbe4ec;
+  border-radius: 999px;
+  padding: 0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.legal-modal-content {
+  padding: 20px 2px 4px;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.legal-modal-content p {
+  margin: 0 0 14px;
+}
+
+.legal-modal-content h3 {
+  margin: 20px 0 6px;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.legal-modal-content ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 21px;
+}
+
+.legal-modal-version {
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.legal-modal-accept {
+  width: auto;
+  min-width: 130px;
+  margin: 18px 0 0 auto;
+}
+
 .public-prize-option {
   display: grid;
   gap: 6px;
@@ -2719,6 +2881,24 @@ tbody tr:hover {
 }
 
 @media (max-width: 640px) {
+  .legal-modal-backdrop {
+    place-items: stretch;
+    padding: 0;
+  }
+
+  .legal-modal-panel {
+    width: 100%;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding: max(20px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .legal-modal-accept {
+    width: 100%;
+  }
+
   .prize-carousel {
     grid-template-columns: 32px minmax(0, 1fr) 32px;
     gap: 5px;

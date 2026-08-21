@@ -51,11 +51,11 @@ export class RifasApiService {
     return this.http.get<RifaDetalle>(`${this.baseUrl}/rifas/slug/${slug}`);
   }
 
-  comprar(rifaId: number, request: { nombre: string; telefono: string; numeros: number[] }) {
+  comprar(rifaId: number, request: { nombre: string; telefono: string; numeros: number[]; aceptaCondiciones: boolean }) {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/${rifaId}/compras`, request);
   }
 
-  comprarPorSlug(slug: string, request: { nombre: string; telefono: string; numeros: number[] }) {
+  comprarPorSlug(slug: string, request: { nombre: string; telefono: string; numeros: number[]; aceptaCondiciones: boolean }) {
     return this.http.post<Compra>(`${this.baseUrl}/rifas/slug/${slug}/compras`, request);
   }
 

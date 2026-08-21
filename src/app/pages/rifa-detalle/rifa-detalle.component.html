@@ -295,9 +295,8 @@
               Teléfono / WhatsApp *
               <div class="phone-input">
                 <span>+54 9</span>
-                <input type="tel" inputmode="numeric" formControlName="telefono" placeholder="2364379198" />
+                <input type="tel" inputmode="numeric" formControlName="telefono" placeholder="1123456789" />
               </div>
-              <span class="field-hint">Usá código de país y área para que el negocio pueda contactarte.</span>
             </label>
 
             <div class="payment-note">
@@ -305,11 +304,21 @@
               <span>Al confirmar, te mostramos el alias y las instrucciones para enviar el comprobante.</span>
             </div>
 
+            <div class="legal-consent" [class.invalid]="form.controls.aceptaCondiciones.touched && form.controls.aceptaCondiciones.invalid">
+              <input id="acepta-condiciones" type="checkbox" formControlName="aceptaCondiciones" />
+              <p>
+                <label for="acepta-condiciones">Al confirmar, acepto las</label>
+                <button type="button" (click)="abrirLegal('condiciones')">condiciones de participación</button>
+                <span>y la</span>
+                <button type="button" (click)="abrirLegal('privacidad')">política de privacidad</button>.
+              </p>
+            </div>
+
             @if (error()) {
               <p class="alert">{{ error() }}</p>
             }
 
-            <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
+            <button class="primary-action" type="submit" [disabled]="!seleccion().length || form.invalid || enviando()">
               {{ enviando() ? 'Confirmando...' : 'Confirmar y ver datos de pago' }}
             </button>
           </form>
@@ -338,6 +347,56 @@
     >
       <button type="button" class="image-modal-close" (click)="cerrarImagenAmpliada()" aria-label="Cerrar imagen">×</button>
       <img [src]="mediaUrl(imagenUrl)" alt="Imagen ampliada del premio" />
+    </section>
+  </div>
+}
+
+@if (legalAbierto(); as documentoLegal) {
+  <div class="legal-modal-backdrop" role="presentation" (click)="cerrarLegal()">
+    <section
+      class="legal-modal-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="documentoLegal + '-titulo'"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="legal-modal-header">
+        <div>
+          <span>Información legal</span>
+          <h2 [id]="documentoLegal + '-titulo'">
+            {{ documentoLegal === 'condiciones' ? 'Condiciones de participación' : 'Política de privacidad' }}
+          </h2>
+        </div>
+        <button type="button" class="legal-modal-close" (click)="cerrarLegal()" aria-label="Cerrar">×</button>
+      </header>
+
+      <div class="legal-modal-content">
+        @if (documentoLegal === 'condiciones') {
+          <p>Al participar en esta rifa aceptás las siguientes condiciones:</p>
+          <ul>
+            <li>La solicitud queda registrada cuando completás tus datos y elegís los números disponibles.</li>
+            <li>Los números se reservan por un tiempo limitado y la asignación definitiva depende de la aprobación del pago.</li>
+            <li>El pago se realiza directamente al organizador mediante los datos informados en esta rifa.</li>
+            <li>El organizador es responsable por el sorteo, sus fechas, los premios, su entrega y el cumplimiento de las normas aplicables.</li>
+            <li>Los datos ingresados deben ser correctos para permitir la identificación y el contacto con el participante.</li>
+            <li>Las cancelaciones, devoluciones o cambios vinculados con la rifa deben gestionarse con el organizador.</li>
+          </ul>
+        } @else {
+          <p>Para gestionar tu participación se tratan los datos que ingresás en este proceso.</p>
+          <h3>Datos utilizados</h3>
+          <p>Nombre y apellido, teléfono o WhatsApp, números seleccionados, estado de la compra y comprobante de pago cuando lo cargás.</p>
+          <h3>Finalidad</h3>
+          <p>Registrar la participación, reservar números, verificar el pago, comunicar novedades y administrar el sorteo.</p>
+          <h3>Acceso y conservación</h3>
+          <p>Los datos quedan disponibles para el organizador y para los proveedores técnicos necesarios para operar el sistema. No se utilizan para vender información personal.</p>
+          <h3>Tus datos</h3>
+          <p>Podés solicitar acceso, corrección o eliminación comunicándote con el organizador, sujeto a las obligaciones de conservación que correspondan.</p>
+        }
+      </div>
+
+      <p class="legal-modal-version">Versión 2026-08-21</p>
+
+      <button type="button" class="primary-action legal-modal-accept" (click)="cerrarLegal()">Entendido</button>
     </section>
   </div>
 }

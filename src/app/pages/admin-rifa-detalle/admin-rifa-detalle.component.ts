@@ -5,6 +5,7 @@ import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AliasCobro, Compra, EstadoCompra, Premio, RifaDetalle } from '../../core/api.models';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { abrirODescargarComprobante } from '../../core/archivo-descarga';
 import { vistaPreviaNumeracion } from '../../core/numeracion-rifa';
 import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
 import { timer } from 'rxjs';
@@ -448,14 +449,9 @@ export class AdminRifaDetalleComponent {
   abrirComprobante(compra: Compra): void {
     this.api.descargarComprobante(compra.id).subscribe({
       next: (response) => {
-        const blob = response.body;
-        if (!blob) {
+        if (!abrirODescargarComprobante(response)) {
           this.error.set('No se pudo abrir el comprobante.');
-          return;
         }
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
       },
       error: () => this.error.set('No se pudo abrir el comprobante.'),
     });

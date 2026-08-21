@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { AliasCobro, Cliente, Compra, DashboardAdmin, EstadoCompra, EstadoRifa, RifaDetalle, RifaResumen } from '../../core/api.models';
 import { AuthService } from '../../core/auth.service';
 import { RifasApiService } from '../../core/rifas-api.service';
+import { abrirODescargarComprobante } from '../../core/archivo-descarga';
 import { vistaPreviaNumeracion } from '../../core/numeracion-rifa';
 import { celularLocalArgentino, normalizarCelularArgentino, VALIDACION_CELULAR_ARGENTINA } from '../../core/telefono-argentina';
 
@@ -482,7 +483,7 @@ export class AdminComponent {
 
   cambiarEstadoAlias(alias: AliasCobro): void {
     const activo = !alias.activo;
-    if (!confirm(`${activo ? 'Activar' : 'Inactivar'} este alias?`)) {
+    if (!confirm(`${activo ? 'Activar' : 'Desactivar'} este alias?`)) {
       return;
     }
     this.api.actualizarEstadoAliasCobro(alias.id, activo).subscribe({
@@ -521,14 +522,9 @@ export class AdminComponent {
   abrirComprobante(compra: Compra): void {
     this.api.descargarComprobante(compra.id).subscribe({
       next: (response) => {
-        const blob = response.body;
-        if (!blob) {
+        if (!abrirODescargarComprobante(response)) {
           this.error.set('No se pudo abrir el comprobante.');
-          return;
         }
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
       },
       error: () => this.error.set('No se pudo abrir el comprobante.'),
     });

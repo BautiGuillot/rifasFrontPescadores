@@ -28,6 +28,7 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly segundosRestantes = signal(0);
   readonly opcionesActivas = signal<Record<number, number>>({});
   readonly imagenAmpliadaUrl = signal<string | null>(null);
+  readonly legalAbierto = signal<'condiciones' | 'privacidad' | null>(null);
   private cuentaRegresivaId: number | null = null;
   private seguimientoId: number | null = null;
   private readonly slug = this.route.snapshot.paramMap.get('slug');
@@ -35,6 +36,7 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     telefono: ['', [Validators.required, Validators.pattern(VALIDACION_CELULAR_ARGENTINA)]],
+    aceptaCondiciones: [false, Validators.requiredTrue],
   });
 
   readonly total = computed(() => {
@@ -109,9 +111,10 @@ export class RifaDetalleComponent implements OnDestroy {
     this.error.set('');
     const datos = this.form.getRawValue();
     const request = {
-      ...datos,
+      nombre: datos.nombre,
       telefono: normalizarCelularArgentino(datos.telefono),
       numeros: this.seleccion(),
+      aceptaCondiciones: datos.aceptaCondiciones,
     };
     const compra$ = this.slug ? this.api.comprarPorSlug(this.slug, request) : this.api.comprar(rifa.id, request);
     compra$.subscribe({
@@ -186,6 +189,14 @@ export class RifaDetalleComponent implements OnDestroy {
 
   cerrarImagenAmpliada(): void {
     this.imagenAmpliadaUrl.set(null);
+  }
+
+  abrirLegal(documento: 'condiciones' | 'privacidad'): void {
+    this.legalAbierto.set(documento);
+  }
+
+  cerrarLegal(): void {
+    this.legalAbierto.set(null);
   }
 
   cargarComprobante(event: Event): void {

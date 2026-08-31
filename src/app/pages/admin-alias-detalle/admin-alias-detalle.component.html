@@ -25,7 +25,7 @@
     <p class="notice">{{ mensaje() }}</p>
   }
   @if (error()) {
-    <p class="alert">{{ error() }}</p>
+    <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
   }
 
   @if (cargando()) {
@@ -43,8 +43,22 @@
           <button type="button" class="small-button" (click)="cerrarEdicion()">Cerrar</button>
         </div>
         <div class="alias-edit-fields">
-          <label>Nombre <input type="text" formControlName="nombre" /></label>
-          <label>Alias <input type="text" formControlName="alias" /></label>
+          <label>
+            Nombre
+            <input type="text" formControlName="nombre" />
+            @if (aliasForm.controls.nombre.touched && aliasForm.controls.nombre.hasError('required')) {
+              <span class="alert compact-alert">Completá el nombre identificador.</span>
+            }
+          </label>
+          <label>
+            Alias
+            <input type="text" formControlName="alias" />
+            @if (aliasForm.controls.alias.touched && aliasForm.controls.alias.hasError('required')) {
+              <span class="alert compact-alert">Completá el alias de cobro.</span>
+            } @else if (aliasForm.controls.alias.touched && aliasForm.controls.alias.hasError('pattern')) {
+              <span class="alert compact-alert">Usá entre 3 y 64 letras, números, puntos, guiones o guiones bajos.</span>
+            }
+          </label>
           <label>Banco o billetera <input type="text" formControlName="entidad" /></label>
           <label>Titular <input type="text" formControlName="titular" /></label>
           <label class="alias-cbu-field">CBU/CVU <input type="text" formControlName="cbuCvu" /></label>

@@ -155,10 +155,13 @@ export class AdminComponent {
   }
 
   guardarMarca(): void {
+    this.mensaje.set('');
     if (this.marcaForm.invalid) {
       this.marcaForm.markAllAsTouched();
+      this.error.set(this.mensajeErrorFormularioMarca());
       return;
     }
+    this.error.set('');
     const raw = this.marcaForm.getRawValue();
     this.api.actualizarMiMarca({
       colorPrincipal: raw.colorPrincipal,
@@ -283,6 +286,7 @@ export class AdminComponent {
   }
 
   guardarRifa(): void {
+    this.mensaje.set('');
     this.form.controls.slug.setValue(this.normalizarSlug(this.form.controls.slug.value));
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -299,6 +303,7 @@ export class AdminComponent {
       this.errorRifa.set('Tenes que seleccionar un alias de cobro activo.');
       return;
     }
+    this.errorRifa.set('');
     const payload = {
       ...raw,
       aliasCobroId: Number(raw.aliasCobroId),
@@ -435,10 +440,13 @@ export class AdminComponent {
   }
 
   guardarAlias(): void {
+    this.mensaje.set('');
     if (this.aliasForm.invalid) {
       this.aliasForm.markAllAsTouched();
+      this.error.set(this.mensajeErrorFormularioAlias());
       return;
     }
+    this.error.set('');
     const raw = this.aliasForm.getRawValue();
     const payload = {
       nombre: raw.nombre,
@@ -532,14 +540,17 @@ export class AdminComponent {
 
   guardarCliente(): void {
     const editandoId = this.editandoClienteId();
+    this.mensaje.set('');
     this.clienteForm.controls.password.setErrors(null);
     if (!editandoId && !this.clienteForm.controls.password.value) {
       this.clienteForm.controls.password.setErrors({ required: true });
     }
     if (this.clienteForm.invalid) {
       this.clienteForm.markAllAsTouched();
+      this.error.set(this.mensajeErrorFormularioCliente());
       return;
     }
+    this.error.set('');
     const raw = this.clienteForm.getRawValue();
     const requestPayload = {
       ...raw,
@@ -692,10 +703,60 @@ export class AdminComponent {
     });
   }
 
+  private mensajeErrorFormularioCliente(): string {
+    const controles = this.clienteForm.controls;
+    if (controles.nombre.hasError('required')) {
+      return 'Completá el nombre del cliente.';
+    }
+    if (controles.slug.hasError('required')) {
+      return 'Completá el slug del cliente.';
+    }
+    if (controles.slug.hasError('pattern')) {
+      return 'El slug debe tener entre 3 y 80 caracteres y usar solo letras minúsculas, números o guiones, sin espacios.';
+    }
+    if (controles.colorPrincipal.hasError('required') || controles.colorPrincipal.hasError('pattern')) {
+      return 'Elegí un color válido para el cliente.';
+    }
+    if (controles.whatsappConsultas.hasError('pattern')) {
+      return 'El WhatsApp de consultas debe tener entre 8 y 10 dígitos, sin el 0 ni el 15.';
+    }
+    if (controles.username.hasError('required')) {
+      return 'Completá el usuario del cliente.';
+    }
+    if (controles.password.hasError('required')) {
+      return 'Completá la contraseña del cliente.';
+    }
+    return 'Revisá los datos del cliente antes de guardarlo.';
+  }
+
+  private mensajeErrorFormularioAlias(): string {
+    if (this.aliasForm.controls.nombre.hasError('required')) {
+      return 'Completá el nombre identificador del alias.';
+    }
+    if (this.aliasForm.controls.alias.hasError('required')) {
+      return 'Completá el alias de cobro.';
+    }
+    if (this.aliasForm.controls.alias.hasError('pattern')) {
+      return 'El alias debe tener entre 3 y 64 caracteres y usar solo letras, números, puntos, guiones o guiones bajos.';
+    }
+    return 'Revisá los datos del alias.';
+  }
+
+  private mensajeErrorFormularioMarca(): string {
+    if (this.marcaForm.controls.colorPrincipal.invalid) {
+      return 'Elegí un color principal válido.';
+    }
+    if (this.marcaForm.controls.whatsappConsultas.hasError('pattern')) {
+      return 'El WhatsApp de consultas debe tener entre 8 y 10 dígitos, sin el 0 ni el 15.';
+    }
+    return 'Revisá los datos de personalización.';
+  }
+
   private guardarLogoClienteSiCorresponde(cliente: Cliente, mensaje: string): void {
     const archivo = this.logoClienteArchivo();
     if (!archivo) {
       this.mensaje.set(mensaje);
+      this.error.set('');
       this.limpiarFormularioCliente();
       this.cargarClientes();
       return;
@@ -705,6 +766,7 @@ export class AdminComponent {
       next: () => {
         this.subiendoLogoCliente.set(false);
         this.mensaje.set(`${mensaje} Logo actualizado.`);
+        this.error.set('');
         this.limpiarFormularioCliente();
         this.cargarClientes();
       },
@@ -807,7 +869,7 @@ export class AdminComponent {
       return 'Indicá al menos un ganador.';
     }
     if (controles.valorNumero.invalid) {
-      return 'Indicá un valor por número mayor a cero.';
+      return 'Indicá un valor por fila mayor a cero.';
     }
     if (controles.aliasCobroId.invalid) {
       return 'Seleccioná un alias de cobro.';

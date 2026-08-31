@@ -23,6 +23,11 @@ export class LoginComponent {
   ingresar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set(
+        this.form.controls.username.hasError('required')
+          ? 'Completá el usuario.'
+          : 'Completá la contraseña.',
+      );
       return;
     }
     this.cargando.set(true);

@@ -8,15 +8,21 @@
     <label>
       Usuario
       <input type="text" formControlName="username" autocomplete="username" />
+      @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+        <span class="alert compact-alert">Completá el usuario.</span>
+      }
     </label>
 
     <label>
       Contraseña
       <input type="password" formControlName="password" autocomplete="current-password" />
+      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+        <span class="alert compact-alert">Completá la contraseña.</span>
+      }
     </label>
 
     @if (error()) {
-      <p class="alert">{{ error() }}</p>
+      <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
     }
 
     <button class="primary-action" type="submit" [disabled]="cargando()">

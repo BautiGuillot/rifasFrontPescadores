@@ -99,6 +99,7 @@ export class AdminAliasDetalleComponent {
   guardarAlias(): void {
     if (this.aliasForm.invalid) {
       this.aliasForm.markAllAsTouched();
+      this.error.set(this.mensajeErrorFormularioAlias());
       return;
     }
     const raw = this.aliasForm.getRawValue();
@@ -139,5 +140,18 @@ export class AdminAliasDetalleComponent {
         this.cargando.set(false);
       },
     });
+  }
+
+  private mensajeErrorFormularioAlias(): string {
+    if (this.aliasForm.controls.nombre.hasError('required')) {
+      return 'Completá el nombre identificador del alias.';
+    }
+    if (this.aliasForm.controls.alias.hasError('required')) {
+      return 'Completá el alias de cobro.';
+    }
+    if (this.aliasForm.controls.alias.hasError('pattern')) {
+      return 'El alias debe tener entre 3 y 64 caracteres y usar solo letras, números, puntos, guiones o guiones bajos.';
+    }
+    return 'Revisá los datos del alias.';
   }
 }

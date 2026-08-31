@@ -32,7 +32,7 @@
     <p class="notice">{{ mensaje() }}</p>
   }
   @if (error()) {
-    <p class="alert">{{ error() }}</p>
+    <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
   }
 
   @if (edicionAbierta()) {
@@ -42,11 +42,22 @@
           <h2>Editar rifa</h2>
           <button type="button" class="small-button" (click)="cerrarEdicion()">Cerrar</button>
         </div>
-        <label>Titulo <input type="text" formControlName="titulo" /></label>
+        <label>
+          Título
+          <input type="text" formControlName="titulo" />
+          @if (formEdicion.controls.titulo.touched && formEdicion.controls.titulo.hasError('required')) {
+            <span class="alert compact-alert">Completá el título de la rifa.</span>
+          }
+        </label>
         <label>
           Slug publico
           <input type="text" formControlName="slug" placeholder="sorteo-navidad" />
-          <span class="field-hint">Se usa para el link publico.</span>
+          <span class="field-hint">Se usa para el link público.</span>
+          @if (formEdicion.controls.slug.touched && formEdicion.controls.slug.hasError('required')) {
+            <span class="alert compact-alert">Completá el slug público.</span>
+          } @else if (formEdicion.controls.slug.touched && formEdicion.controls.slug.hasError('pattern')) {
+            <span class="alert compact-alert">Debe tener entre 3 y 80 letras, números o guiones.</span>
+          }
         </label>
         <label>Descripcion <textarea rows="3" formControlName="descripcion"></textarea></label>
         <label>
@@ -55,8 +66,20 @@
           <span class="field-hint">Explica como y cuando se realizara el sorteo.</span>
         </label>
         <div class="form-grid">
-          <label>Total de números <input type="number" formControlName="cantidadNumeros" /></label>
-          <label>Números por fila <input type="number" formControlName="numerosPorFila" /></label>
+          <label>
+            Total de números
+            <input type="number" formControlName="cantidadNumeros" />
+            @if (formEdicion.controls.cantidadNumeros.touched && formEdicion.controls.cantidadNumeros.invalid) {
+              <span class="alert compact-alert">Ingresá un total mayor a cero.</span>
+            }
+          </label>
+          <label>
+            Números por fila
+            <input type="number" formControlName="numerosPorFila" />
+            @if (formEdicion.controls.numerosPorFila.touched && formEdicion.controls.numerosPorFila.invalid) {
+              <span class="alert compact-alert">Ingresá una cantidad mayor a cero.</span>
+            }
+          </label>
           <label>
             La numeración comienza en
             <select formControlName="numeroInicial">
@@ -64,8 +87,20 @@
               <option [ngValue]="1">01</option>
             </select>
           </label>
-          <label>Ganadores <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" /></label>
-          <label>Valor <input type="number" formControlName="valorNumero" /></label>
+          <label>
+            Ganadores
+            <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" />
+            @if (formEdicion.controls.cantidadGanadores.touched && formEdicion.controls.cantidadGanadores.invalid) {
+              <span class="alert compact-alert">Indicá al menos un ganador.</span>
+            }
+          </label>
+          <label>
+            Valor por fila
+            <input type="number" formControlName="valorNumero" />
+            @if (formEdicion.controls.valorNumero.touched && formEdicion.controls.valorNumero.invalid) {
+              <span class="alert compact-alert">Ingresá un valor mayor a cero.</span>
+            }
+          </label>
         </div>
         @if (vistaPreviaNumeros(); as vista) {
           <div class="number-config-preview">
@@ -93,6 +128,9 @@
           @if (aliasSeleccionado(); as alias) {
             <span class="field-hint">{{ alias.entidad || 'Cuenta de cobro' }} · {{ alias.alias }}</span>
           }
+          @if (formEdicion.controls.aliasCobroId.touched && formEdicion.controls.aliasCobroId.invalid) {
+            <span class="alert compact-alert">Seleccioná un alias de cobro.</span>
+          }
         </label>
         <label>
           WhatsApp para comprobantes
@@ -100,7 +138,12 @@
             <span>+54 9</span>
             <input type="tel" inputmode="numeric" formControlName="whatsappComprobante" placeholder="2364379198" />
           </div>
-          <span class="field-hint">Ingresa el celular sin 0 ni 15.</span>
+          <span class="field-hint">Ingresá el celular sin 0 ni 15.</span>
+          @if (formEdicion.controls.whatsappComprobante.touched && formEdicion.controls.whatsappComprobante.hasError('required')) {
+            <span class="alert compact-alert">Completá el WhatsApp para comprobantes.</span>
+          } @else if (formEdicion.controls.whatsappComprobante.touched && formEdicion.controls.whatsappComprobante.hasError('pattern')) {
+            <span class="alert compact-alert">Ingresá entre 8 y 10 dígitos.</span>
+          }
         </label>
 
         <div class="nested-list" formArrayName="premios">
@@ -124,6 +167,9 @@
                     <span class="prize-option-number">Opcion {{ opcionIndex + 1 }}</span>
                     <div class="prize-fields">
                       <input type="text" formControlName="descripcion" placeholder="Descripcion de la opcion" />
+                      @if (opcion.get('descripcion')?.touched && opcion.get('descripcion')?.hasError('required')) {
+                        <span class="alert compact-alert">Completá la descripción de esta opción.</span>
+                      }
                       <label class="file-action">
                         {{ subiendoPremio() === (premioIndex + '-' + opcionIndex) ? 'Subiendo...' : 'Subir imagen' }}
                         <input
@@ -158,6 +204,10 @@
             + Agregar otro ganador y sus premios
           </button>
         </div>
+
+        @if (errorEdicion()) {
+          <p class="alert" role="alert" aria-live="assertive">{{ errorEdicion() }}</p>
+        }
 
         <button class="primary-action" type="submit" [disabled]="guardandoEdicion()">
           {{ guardandoEdicion() ? 'Guardando...' : 'Guardar cambios' }}

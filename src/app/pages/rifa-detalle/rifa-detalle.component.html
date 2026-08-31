@@ -14,6 +14,9 @@
 
         <div class="price-box">
           <span>Valor por fila</span>
+          <small>
+            ({{ rifa.numerosPorFila }} {{ rifa.numerosPorFila === 1 ? 'número' : 'números' }})
+          </small>
           <strong>{{ rifa.valorNumero | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
         </div>
       </div>
@@ -210,7 +213,7 @@
           <dl class="purchase-details">
             <div>
               <dt>Filas</dt>
-              <dd>{{ compra.numeros.join(', ') }}</dd>
+              <dd>{{ filasCompra(compra.numeros) }}</dd>
             </div>
             <div>
               <dt>Total</dt>
@@ -279,7 +282,11 @@
         <div class="checkout-card">
           @if (numerosSeleccionados().length) {
             <div class="checkout-summary">
-              <span>{{ numerosSeleccionados().length }} {{ numerosSeleccionados().length === 1 ? 'número' : 'números' }}: {{ seleccionEtiquetas() }}</span>
+              <span>
+                {{ numerosSeleccionados().length }}
+                {{ numerosSeleccionados().length === 1 ? 'fila' : 'filas' }}:
+                {{ seleccionEtiquetas() }}
+              </span>
               <strong>Monto esperado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
             </div>
           }
@@ -290,6 +297,9 @@
             <label>
               Nombre y apellido *
               <input type="text" formControlName="nombre" placeholder="Juan García" />
+              @if (form.controls.nombre.touched && form.controls.nombre.hasError('required')) {
+                <span class="alert compact-alert">Completá tu nombre y apellido.</span>
+              }
             </label>
             <label>
               Teléfono / WhatsApp *
@@ -297,6 +307,11 @@
                 <span>+54 9</span>
                 <input type="tel" inputmode="numeric" formControlName="telefono" placeholder="1123456789" />
               </div>
+              @if (form.controls.telefono.touched && form.controls.telefono.hasError('required')) {
+                <span class="alert compact-alert">Completá tu teléfono o WhatsApp.</span>
+              } @else if (form.controls.telefono.touched && form.controls.telefono.hasError('pattern')) {
+                <span class="alert compact-alert">Ingresá entre 8 y 10 dígitos, sin el 0 ni el 15.</span>
+              }
             </label>
 
             <div class="payment-note">
@@ -313,12 +328,15 @@
                 <button type="button" (click)="abrirLegal('privacidad')">política de privacidad</button>.
               </p>
             </div>
-
-            @if (error()) {
-              <p class="alert">{{ error() }}</p>
+            @if (form.controls.aceptaCondiciones.touched && form.controls.aceptaCondiciones.invalid) {
+              <p class="alert compact-alert">Aceptá las condiciones y la política de privacidad para continuar.</p>
             }
 
-            <button class="primary-action" type="submit" [disabled]="!seleccion().length || form.invalid || enviando()">
+            @if (error()) {
+              <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
+            }
+
+            <button class="primary-action" type="submit" [disabled]="!seleccion().length || enviando()">
               {{ enviando() ? 'Confirmando...' : 'Confirmar y ver datos de pago' }}
             </button>
           </form>
@@ -329,7 +347,7 @@
 } @else {
   <section class="content-shell">
     @if (error()) {
-      <p class="alert">{{ error() }}</p>
+      <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
     } @else {
       <p class="muted">Cargando rifa...</p>
     }

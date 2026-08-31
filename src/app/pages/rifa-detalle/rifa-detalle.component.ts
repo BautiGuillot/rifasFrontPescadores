@@ -55,11 +55,11 @@ export class RifaDetalleComponent implements OnDestroy {
   });
 
   readonly seleccionEtiquetas = computed(() =>
-    this.numerosSeleccionados()
-      .map((numero) =>
+    this.formatearFilas(
+      this.numerosSeleccionados().map((numero) =>
         numero.numerosIncluidos.length > 1 ? numero.numerosIncluidos.join('-') : numero.etiqueta,
-      )
-      .join(', '),
+      ),
+    ),
   );
 
   readonly compraConComprobante = computed(() => {
@@ -105,6 +105,7 @@ export class RifaDetalleComponent implements OnDestroy {
     const rifa = this.rifa();
     if (!rifa || !this.seleccion().length || this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set(this.mensajeErrorFormularioCompra());
       return;
     }
     this.enviando.set(true);
@@ -133,9 +134,13 @@ export class RifaDetalleComponent implements OnDestroy {
   }
 
   whatsappUrl(compra: Compra): string {
-    const numeros = compra.numeros.join(', ');
-    const text = `Hola, realicé una compra para la rifa ${compra.rifaTitulo}. Números: ${numeros}. Nombre: ${compra.nombre}.`;
+    const filas = this.formatearFilas(compra.numeros);
+    const text = `Hola, realicé una compra para la rifa ${compra.rifaTitulo}. Filas: ${filas}. Nombre: ${compra.nombre}.`;
     return `https://wa.me/${this.whatsappNumero(compra.whatsappComprobante)}?text=${encodeURIComponent(text)}`;
+  }
+
+  filasCompra(etiquetas: string[]): string {
+    return this.formatearFilas(etiquetas);
   }
 
   colorPrincipal(rifa: RifaDetalle): string {
@@ -269,6 +274,29 @@ export class RifaDetalleComponent implements OnDestroy {
 
   private whatsappNumero(numero: string): string {
     return normalizarCelularArgentino(numero);
+  }
+
+  private mensajeErrorFormularioCompra(): string {
+    if (!this.seleccion().length) {
+      return 'Elegí al menos una fila para continuar.';
+    }
+    if (this.form.controls.nombre.hasError('required')) {
+      return 'Completá tu nombre y apellido.';
+    }
+    if (this.form.controls.telefono.hasError('required')) {
+      return 'Completá tu teléfono o WhatsApp.';
+    }
+    if (this.form.controls.telefono.hasError('pattern')) {
+      return 'El teléfono debe tener entre 8 y 10 dígitos, sin el 0 ni el 15.';
+    }
+    if (this.form.controls.aceptaCondiciones.hasError('required')) {
+      return 'Aceptá las condiciones de participación y la política de privacidad.';
+    }
+    return 'Revisá los datos de la compra.';
+  }
+
+  private formatearFilas(etiquetas: string[]): string {
+    return etiquetas.map((etiqueta) => `(${etiqueta})`).join(', ');
   }
 
   private indiceOpcionActiva(posicion: number, total: number): number {

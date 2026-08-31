@@ -11,7 +11,7 @@
       <p class="notice">{{ mensaje() }}</p>
     }
     @if (error()) {
-      <p class="alert">{{ error() }}</p>
+      <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
     }
 
     <div class="split-layout">
@@ -22,10 +22,31 @@
             <button type="button" class="small-button" (click)="cancelarEdicionCliente()">Cancelar edición</button>
           }
         </div>
-        <label>Nombre <input type="text" formControlName="nombre" /></label>
-        <label>Slug <input type="text" formControlName="slug" placeholder="tienda-a" /></label>
+        <label>
+          Nombre
+          <input type="text" formControlName="nombre" />
+          @if (clienteForm.controls.nombre.touched && clienteForm.controls.nombre.hasError('required')) {
+            <span class="alert compact-alert">Completá el nombre del cliente.</span>
+          }
+        </label>
+        <label>
+          Slug
+          <input type="text" formControlName="slug" placeholder="tienda-a" />
+          <span class="field-hint">Usá letras minúsculas, números o guiones, sin espacios.</span>
+          @if (clienteForm.controls.slug.touched && clienteForm.controls.slug.hasError('required')) {
+            <span class="alert compact-alert">Completá el slug del cliente.</span>
+          } @else if (clienteForm.controls.slug.touched && clienteForm.controls.slug.hasError('pattern')) {
+            <span class="alert compact-alert">Debe tener entre 3 y 80 caracteres, sin espacios.</span>
+          }
+        </label>
         <div class="form-grid">
-          <label>Color <input type="color" formControlName="colorPrincipal" /></label>
+          <label>
+            Color
+            <input type="color" formControlName="colorPrincipal" />
+            @if (clienteForm.controls.colorPrincipal.touched && clienteForm.controls.colorPrincipal.invalid) {
+              <span class="alert compact-alert">Elegí un color válido.</span>
+            }
+          </label>
           <label class="file-action">
             {{ subiendoLogoCliente() ? 'Subiendo logo...' : 'Subir logo' }}
             <input type="file" accept="image/jpeg,image/png,image/webp" [disabled]="subiendoLogoCliente()" (change)="seleccionarLogoCliente($event)" />
@@ -53,12 +74,24 @@
               <input type="tel" inputmode="numeric" formControlName="whatsappConsultas" placeholder="2364379198" />
             </div>
             <span class="field-hint">Sin 0 ni 15.</span>
+            @if (clienteForm.controls.whatsappConsultas.touched && clienteForm.controls.whatsappConsultas.hasError('pattern')) {
+              <span class="alert compact-alert">Ingresá entre 8 y 10 dígitos.</span>
+            }
           </label>
         </div>
-        <label>Usuario <input type="text" formControlName="username" /></label>
+        <label>
+          Usuario
+          <input type="text" formControlName="username" />
+          @if (clienteForm.controls.username.touched && clienteForm.controls.username.hasError('required')) {
+            <span class="alert compact-alert">Completá el usuario del cliente.</span>
+          }
+        </label>
         <label>
           {{ editandoClienteId() ? 'Nueva contraseña' : 'Contraseña' }}
           <input type="password" formControlName="password" [placeholder]="editandoClienteId() ? 'Dejar vacía para no cambiar' : ''" />
+          @if (clienteForm.controls.password.touched && clienteForm.controls.password.hasError('required')) {
+            <span class="alert compact-alert">Completá la contraseña del cliente.</span>
+          }
         </label>
         <button class="primary-action" type="submit">
           {{ editandoClienteId() ? 'Guardar cambios' : 'Crear cliente' }}
@@ -131,7 +164,7 @@
     <p class="notice">{{ mensaje() }}</p>
   }
   @if (error()) {
-    <p class="alert">{{ error() }}</p>
+    <p class="alert" role="alert" aria-live="assertive">{{ error() }}</p>
   }
 
   @if (tab() === 'dashboard') {
@@ -169,11 +202,22 @@
             <h2>{{ editandoRifaId() ? 'Editar rifa' : rifaOrigenTitulo() ? 'Nueva rifa a partir de otra' : 'Nueva rifa' }}</h2>
             <button type="button" class="small-button" (click)="cancelarEdicion()">Cerrar</button>
           </div>
-          <label>Título <input type="text" formControlName="titulo" /></label>
+          <label>
+            Título
+            <input type="text" formControlName="titulo" />
+            @if (form.controls.titulo.touched && form.controls.titulo.hasError('required')) {
+              <span class="alert compact-alert">Completá el título de la rifa.</span>
+            }
+          </label>
           <label>
             Slug público
             <input type="text" formControlName="slug" placeholder="sorteo-navidad" />
             <span class="field-hint">Se usa para el link público. Si escribís espacios se convierten en guiones.</span>
+            @if (form.controls.slug.touched && form.controls.slug.hasError('required')) {
+              <span class="alert compact-alert">Completá el slug público.</span>
+            } @else if (form.controls.slug.touched && form.controls.slug.hasError('pattern')) {
+              <span class="alert compact-alert">Debe tener entre 3 y 80 letras, números o guiones.</span>
+            }
           </label>
           <label>Descripción <textarea rows="3" formControlName="descripcion"></textarea></label>
           <label>
@@ -186,8 +230,20 @@
             <span class="field-hint">Explicá cómo y cuándo se realizará el sorteo para que el comprador lo vea en la rifa.</span>
           </label>
           <div class="form-grid">
-            <label>Total de números <input type="number" formControlName="cantidadNumeros" /></label>
-            <label>Números por fila <input type="number" formControlName="numerosPorFila" /></label>
+            <label>
+              Total de números
+              <input type="number" formControlName="cantidadNumeros" />
+              @if (form.controls.cantidadNumeros.touched && form.controls.cantidadNumeros.invalid) {
+                <span class="alert compact-alert">Ingresá un total mayor a cero.</span>
+              }
+            </label>
+            <label>
+              Números por fila
+              <input type="number" formControlName="numerosPorFila" />
+              @if (form.controls.numerosPorFila.touched && form.controls.numerosPorFila.invalid) {
+                <span class="alert compact-alert">Ingresá una cantidad mayor a cero.</span>
+              }
+            </label>
             <label>
               La numeración comienza en
               <select formControlName="numeroInicial">
@@ -195,8 +251,20 @@
                 <option [ngValue]="1">01</option>
               </select>
             </label>
-            <label>Ganadores <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" /></label>
-            <label>Valor <input type="number" formControlName="valorNumero" /></label>
+            <label>
+              Ganadores
+              <input type="number" formControlName="cantidadGanadores" (input)="sincronizarPremios()" />
+              @if (form.controls.cantidadGanadores.touched && form.controls.cantidadGanadores.invalid) {
+                <span class="alert compact-alert">Indicá al menos un ganador.</span>
+              }
+            </label>
+            <label>
+              Valor por fila
+              <input type="number" formControlName="valorNumero" />
+              @if (form.controls.valorNumero.touched && form.controls.valorNumero.invalid) {
+                <span class="alert compact-alert">Ingresá un valor mayor a cero.</span>
+              }
+            </label>
           </div>
           @if (vistaPreviaNumeros(); as vista) {
             <div class="number-config-preview">
@@ -226,6 +294,9 @@
             } @else if (aliasSeleccionado(); as alias) {
               <span class="field-hint">{{ alias.entidad || 'Cuenta de cobro' }} · {{ alias.alias }}</span>
             }
+            @if (form.controls.aliasCobroId.touched && form.controls.aliasCobroId.invalid) {
+              <span class="alert compact-alert">Seleccioná un alias de cobro.</span>
+            }
           </label>
           <label>WhatsApp para comprobantes
             <div class="phone-input">
@@ -233,6 +304,11 @@
               <input type="tel" inputmode="numeric" formControlName="whatsappComprobante" placeholder="2364379198" />
             </div>
             <span class="field-hint">Ingresá el celular sin 0 ni 15.</span>
+            @if (form.controls.whatsappComprobante.touched && form.controls.whatsappComprobante.hasError('required')) {
+              <span class="alert compact-alert">Completá el WhatsApp para comprobantes.</span>
+            } @else if (form.controls.whatsappComprobante.touched && form.controls.whatsappComprobante.hasError('pattern')) {
+              <span class="alert compact-alert">Ingresá entre 8 y 10 dígitos.</span>
+            }
           </label>
 
           <div class="nested-list" formArrayName="premios">
@@ -256,6 +332,9 @@
                       <span class="prize-option-number">Opción {{ opcionIndex + 1 }}</span>
                       <div class="prize-fields">
                         <input type="text" formControlName="descripcion" placeholder="Descripción de la opción" />
+                        @if (opcion.get('descripcion')?.touched && opcion.get('descripcion')?.hasError('required')) {
+                          <span class="alert compact-alert">Completá la descripción de esta opción.</span>
+                        }
                         <label class="file-action">
                           {{ subiendoPremio() === (premioIndex + '-' + opcionIndex) ? 'Subiendo...' : 'Subir imagen' }}
                           <input
@@ -427,8 +506,22 @@
             <button type="button" class="small-button" (click)="cancelarEdicionAlias()">Cancelar edición</button>
           }
         </div>
-        <label>Nombre <input type="text" formControlName="nombre" placeholder="Mercado Pago principal" /></label>
-        <label>Alias <input type="text" formControlName="alias" placeholder="mi.negocio.mp" /></label>
+        <label>
+          Nombre
+          <input type="text" formControlName="nombre" placeholder="Mercado Pago principal" />
+          @if (aliasForm.controls.nombre.touched && aliasForm.controls.nombre.hasError('required')) {
+            <span class="alert compact-alert">Completá el nombre identificador.</span>
+          }
+        </label>
+        <label>
+          Alias
+          <input type="text" formControlName="alias" placeholder="mi.negocio.mp" />
+          @if (aliasForm.controls.alias.touched && aliasForm.controls.alias.hasError('required')) {
+            <span class="alert compact-alert">Completá el alias de cobro.</span>
+          } @else if (aliasForm.controls.alias.touched && aliasForm.controls.alias.hasError('pattern')) {
+            <span class="alert compact-alert">Usá entre 3 y 64 letras, números, puntos, guiones o guiones bajos.</span>
+          }
+        </label>
         <label>Banco o billetera <input type="text" formControlName="entidad" placeholder="Mercado Pago, Banco Nación..." /></label>
         <label>Titular <input type="text" formControlName="titular" /></label>
         <label>CBU/CVU <input type="text" formControlName="cbuCvu" /></label>
@@ -492,7 +585,13 @@
     <div class="split-layout">
       <form class="form-panel" [formGroup]="marcaForm" (ngSubmit)="guardarMarca()">
         <h2>Personalización</h2>
-        <label>Color principal <input type="color" formControlName="colorPrincipal" /></label>
+        <label>
+          Color principal
+          <input type="color" formControlName="colorPrincipal" />
+          @if (marcaForm.controls.colorPrincipal.touched && marcaForm.controls.colorPrincipal.invalid) {
+            <span class="alert compact-alert">Elegí un color válido.</span>
+          }
+        </label>
         <label class="file-action">
           {{ subiendoLogo() ? 'Subiendo logo...' : 'Subir logo' }}
           <input type="file" accept="image/jpeg,image/png,image/webp" [disabled]="subiendoLogo()" (change)="subirLogo($event)" />
@@ -512,6 +611,9 @@
               <input type="tel" inputmode="numeric" formControlName="whatsappConsultas" placeholder="2364379198" />
             </div>
             <span class="field-hint">Sin 0 ni 15.</span>
+            @if (marcaForm.controls.whatsappConsultas.touched && marcaForm.controls.whatsappConsultas.hasError('pattern')) {
+              <span class="alert compact-alert">Ingresá entre 8 y 10 dígitos.</span>
+            }
           </label>
           <p class="field-hint">El automático pide responder sólo con comprobantes. Las consultas se derivan al número indicado.</p>
         </div>

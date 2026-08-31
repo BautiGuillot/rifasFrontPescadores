@@ -383,6 +383,16 @@ dd {
   text-transform: uppercase;
 }
 
+.price-box small {
+  display: block;
+  margin-top: 2px;
+  color: #64727d;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
 .price-box strong {
   display: block;
   margin-top: 4px;

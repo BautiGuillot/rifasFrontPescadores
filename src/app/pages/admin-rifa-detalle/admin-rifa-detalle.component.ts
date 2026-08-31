@@ -27,6 +27,7 @@ export class AdminRifaDetalleComponent {
   readonly compraFiltro = signal<EstadoCompra | ''>('PENDIENTE_PAGO');
   readonly mensaje = signal('');
   readonly error = signal('');
+  readonly errorEdicion = signal('');
   readonly edicionAbierta = signal(false);
   readonly guardandoEdicion = signal(false);
   readonly subiendoPremio = signal<string | null>(null);
@@ -317,6 +318,7 @@ export class AdminRifaDetalleComponent {
         this.aliases.set(aliases);
         this.edicionAbierta.set(true);
         this.error.set('');
+        this.errorEdicion.set('');
       },
       error: () => this.error.set('No se pudieron cargar los alias de cobro.'),
     });
@@ -326,6 +328,7 @@ export class AdminRifaDetalleComponent {
     this.edicionAbierta.set(false);
     this.guardandoEdicion.set(false);
     this.subiendoPremio.set(null);
+    this.errorEdicion.set('');
   }
 
   sincronizarPremios(): void {
@@ -354,7 +357,7 @@ export class AdminRifaDetalleComponent {
         this.subiendoPremio.set(null);
       },
       error: (error) => {
-        this.error.set(error.error?.message || 'No se pudo subir la imagen del premio.');
+        this.errorEdicion.set(error.error?.message || 'No se pudo subir la imagen del premio.');
         this.subiendoPremio.set(null);
       },
     });
@@ -365,20 +368,23 @@ export class AdminRifaDetalleComponent {
     if (!rifa) {
       return;
     }
+    this.mensaje.set('');
     this.formEdicion.controls.slug.setValue(this.normalizarSlug(this.formEdicion.controls.slug.value));
     if (this.formEdicion.invalid) {
       this.formEdicion.markAllAsTouched();
+      this.errorEdicion.set(this.mensajeErrorFormularioEdicion());
       return;
     }
     if (!this.vistaPreviaNumeros()) {
-      this.error.set('La cantidad total de números debe ser divisible por los números incluidos en cada fila.');
+      this.errorEdicion.set('La cantidad total de números debe ser divisible por los números incluidos en cada fila.');
       return;
     }
     const alias = this.aliasSeleccionado();
     if (!alias || !alias.activo) {
-      this.error.set('Tenes que seleccionar un alias de cobro activo.');
+      this.errorEdicion.set('Tenés que seleccionar un alias de cobro activo.');
       return;
     }
+    this.errorEdicion.set('');
     const raw = this.formEdicion.getRawValue();
     const payload = {
       ...raw,
@@ -408,7 +414,7 @@ export class AdminRifaDetalleComponent {
         this.cargarDetalle();
       },
       error: (error) => {
-        this.error.set(error.error?.message || 'No se pudo actualizar la rifa.');
+        this.errorEdicion.set(error.error?.message || 'No se pudo actualizar la rifa.');
         this.guardandoEdicion.set(false);
       },
     });
@@ -555,6 +561,50 @@ export class AdminRifaDetalleComponent {
       '',
       this.linkPublicoRifa(rifa),
     ].filter((linea, index, lineas) => linea !== '' || (index > 0 && lineas[index - 1] !== '')).join('\n').trim();
+  }
+
+  private mensajeErrorFormularioEdicion(): string {
+    const controles = this.formEdicion.controls;
+    if (controles.titulo.hasError('required')) {
+      return 'Completá el título de la rifa.';
+    }
+    if (controles.slug.hasError('required')) {
+      return 'Completá el slug público de la rifa.';
+    }
+    if (controles.slug.hasError('pattern')) {
+      return 'El slug debe tener entre 3 y 80 caracteres y usar letras, números o guiones.';
+    }
+    if (controles.cantidadNumeros.invalid) {
+      return 'Indicá una cantidad total de números mayor a cero.';
+    }
+    if (controles.numerosPorFila.invalid) {
+      return 'Indicá cuántos números incluye cada fila.';
+    }
+    if (controles.numeroInicial.invalid) {
+      return 'La numeración debe comenzar en 00 o en 01.';
+    }
+    if (controles.cantidadGanadores.invalid) {
+      return 'Indicá al menos un ganador.';
+    }
+    if (controles.valorNumero.invalid) {
+      return 'Indicá un valor por fila mayor a cero.';
+    }
+    if (controles.aliasCobroId.invalid) {
+      return 'Seleccioná un alias de cobro.';
+    }
+    if (controles.whatsappComprobante.hasError('required')) {
+      return 'Completá el WhatsApp para comprobantes.';
+    }
+    if (controles.whatsappComprobante.hasError('pattern')) {
+      return 'El WhatsApp debe tener entre 8 y 10 dígitos, sin el 0 ni el 15.';
+    }
+    for (let indice = 0; indice < this.premios.length; indice += 1) {
+      const opciones = this.opcionesPremio(indice);
+      if (!opciones.length || opciones.controls.some((opcion) => opcion.get('descripcion')?.invalid)) {
+        return `Completá todas las opciones del premio ${indice + 1}.`;
+      }
+    }
+    return 'Revisá los datos obligatorios de la rifa.';
   }
 
   private crearPremio(posicion: number) {

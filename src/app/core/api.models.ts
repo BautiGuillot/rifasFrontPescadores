@@ -33,6 +33,7 @@ export interface NumeroRifa {
   etiqueta: string;
   numerosIncluidos: string[];
   estado: EstadoNumero;
+  compradorNombre?: string | null;
 }
 
 export interface RifaResumen {

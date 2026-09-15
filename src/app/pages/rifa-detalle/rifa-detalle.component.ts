@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Compra, NumeroRifa, Premio, RifaDetalle } from '../../core/api.models';
@@ -20,6 +20,7 @@ export class RifaDetalleComponent implements OnDestroy {
   readonly rifa = signal<RifaDetalle | null>(null);
   readonly seleccion = signal<number[]>([]);
   readonly compra = signal<Compra | null>(null);
+  readonly confirmacionCompra = viewChild<ElementRef<HTMLDialogElement>>('confirmacionCompra');
   readonly error = signal('');
   readonly comprobanteMensaje = signal('');
   readonly enviando = signal(false);
@@ -90,7 +91,7 @@ export class RifaDetalleComponent implements OnDestroy {
   }
 
   toggle(numero: NumeroRifa): void {
-    if (this.rifa()?.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || this.compra()) {
+    if (this.rifa()?.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || this.compra() || this.enviando()) {
       return;
     }
     const actual = this.seleccion();
@@ -102,10 +103,26 @@ export class RifaDetalleComponent implements OnDestroy {
   }
 
   confirmar(): void {
+    if (this.enviando() || this.compra()) {
+      return;
+    }
     const rifa = this.rifa();
     if (!rifa || !this.seleccion().length || this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set(this.mensajeErrorFormularioCompra());
+      return;
+    }
+    this.error.set('');
+    this.confirmacionCompra()?.nativeElement.showModal();
+  }
+
+  registrarCompra(): void {
+    const rifa = this.rifa();
+    if (!this.confirmacionCompra()?.nativeElement.open || this.enviando() || this.compra() || !rifa) {
+      return;
+    }
+    if (rifa.estado !== 'PUBLICADA' || !this.seleccion().length || this.form.invalid) {
+      this.error.set('Revisá los datos y los números seleccionados antes de confirmar.');
       return;
     }
     this.enviando.set(true);
@@ -121,6 +138,16 @@ export class RifaDetalleComponent implements OnDestroy {
     compra$.subscribe({
       next: (compra) => {
         this.compra.set(compra);
+        const elegidos = this.seleccion();
+        this.rifa.update((actual) => actual ? {
+          ...actual,
+          numeros: actual.numeros.map((numero) => elegidos.includes(numero.valor)
+            ? { ...numero, estado: compra.estado === 'APROBADA' ? 'VENDIDO' : 'PENDIENTE', compradorNombre: compra.nombre }
+            : numero),
+        } : actual);
+        this.seleccion.set([]);
+        this.confirmacionCompra()?.nativeElement.close();
+        this.irACompra();
         this.iniciarCuentaRegresiva(compra);
         this.iniciarSeguimiento(compra);
         this.enviando.set(false);
@@ -131,6 +158,19 @@ export class RifaDetalleComponent implements OnDestroy {
         this.enviando.set(false);
       },
     });
+  }
+
+  cerrarConfirmacionCompra(): void {
+    if (this.enviando()) {
+      return;
+    }
+    this.confirmacionCompra()?.nativeElement.close();
+  }
+
+  mostrarNumerosComprados(): void {
+    const grilla = document.getElementById('numeros-rifa');
+    grilla?.focus({ preventScroll: true });
+    grilla?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   whatsappUrl(compra: Compra): string {
@@ -208,7 +248,7 @@ export class RifaDetalleComponent implements OnDestroy {
     const compra = this.compra();
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0];
-    if (!compra?.tokenSeguimiento || !archivo) {
+    if (!compra?.tokenSeguimiento || !archivo || this.subiendoComprobante() || this.marcandoWhatsapp() || this.compraConComprobante()) {
       return;
     }
     this.subiendoComprobante.set(true);
@@ -220,6 +260,7 @@ export class RifaDetalleComponent implements OnDestroy {
         this.iniciarSeguimiento(actualizada);
         this.comprobanteMensaje.set('Comprobante cargado.');
         this.subiendoComprobante.set(false);
+        this.refrescarTrasComprobante(actualizada);
       },
       error: (error) => {
         this.comprobanteMensaje.set(error.error?.message || 'No se pudo cargar el comprobante.');
@@ -230,7 +271,7 @@ export class RifaDetalleComponent implements OnDestroy {
 
   marcarComprobanteWhatsapp(): void {
     const compra = this.compra();
-    if (!compra?.tokenSeguimiento) {
+    if (!compra?.tokenSeguimiento || this.marcandoWhatsapp() || this.subiendoComprobante() || this.compraConComprobante()) {
       return;
     }
     this.marcandoWhatsapp.set(true);
@@ -242,6 +283,7 @@ export class RifaDetalleComponent implements OnDestroy {
         this.iniciarSeguimiento(actualizada);
         this.comprobanteMensaje.set('Quedó registrado que enviaste el comprobante por WhatsApp.');
         this.marcandoWhatsapp.set(false);
+        this.refrescarTrasComprobante(actualizada);
       },
       error: (error) => {
         this.comprobanteMensaje.set(error.error?.message || 'No se pudo registrar el aviso por WhatsApp.');
@@ -250,23 +292,33 @@ export class RifaDetalleComponent implements OnDestroy {
     });
   }
 
-  private cargar(id: number): void {
+  private refrescarTrasComprobante(compra: Compra): void {
+    this.slug ? this.cargarPorSlug(this.slug, true) : this.cargar(compra.rifaId, true);
+  }
+
+  private cargar(id: number, mostrarNumeros = false): void {
     this.error.set('');
     this.api.detalleRifa(id).subscribe({
       next: (rifa) => {
         this.rifa.set(rifa);
         this.theme.setPublicColor(rifa.clienteColorPrincipal);
+        if (mostrarNumeros) {
+          this.mostrarNumerosComprados();
+        }
       },
       error: (error) => this.error.set(error.error?.message || 'No se pudo cargar la rifa.'),
     });
   }
 
-  private cargarPorSlug(slug: string): void {
+  private cargarPorSlug(slug: string, mostrarNumeros = false): void {
     this.error.set('');
     this.api.detalleRifaPorSlug(slug).subscribe({
       next: (rifa) => {
         this.rifa.set(rifa);
         this.theme.setPublicColor(rifa.clienteColorPrincipal);
+        if (mostrarNumeros) {
+          this.mostrarNumerosComprados();
+        }
       },
       error: (error) => this.error.set(error.error?.message || 'No se pudo cargar la rifa.'),
     });
@@ -365,6 +417,9 @@ export class RifaDetalleComponent implements OnDestroy {
     if (comprobanteRecibido) {
       this.detenerCuentaRegresiva();
     }
+    if (estado === 'CANCELADA') {
+      this.cerrarConfirmacionCompra();
+    }
     if (estado === 'APROBADA' || estado === 'CANCELADA') {
       this.detenerCuentaRegresiva();
       this.detenerSeguimiento();
@@ -386,6 +441,7 @@ export class RifaDetalleComponent implements OnDestroy {
     this.api.expirarCompra(compra.id, compra.tokenSeguimiento).subscribe({
       next: (actualizada) => {
         this.detenerSeguimiento();
+        this.cerrarConfirmacionCompra();
         this.compra.set(null);
         this.seleccion.set([]);
         this.comprobanteMensaje.set('');

@@ -142,22 +142,30 @@
         <span>{{ rifa.cantidadNumeros }} números de sorteo</span>
       </div>
 
-      <div class="number-grid grouped public-number-grid" [class.has-grouped-rows]="rifa.cantidadFilas !== rifa.cantidadNumeros">
+      <div id="numeros-rifa" tabindex="-1" aria-label="Números de la rifa" class="number-grid grouped public-number-grid" [class.has-grouped-rows]="rifa.cantidadFilas !== rifa.cantidadNumeros">
         @for (numero of rifa.numeros; track numero.id) {
-          <button
-            type="button"
-            class="number-cell grouped-cell"
-            [class.available]="numero.estado === 'DISPONIBLE'"
-            [class.pending]="numero.estado === 'PENDIENTE'"
-            [class.sold]="numero.estado === 'VENDIDO'"
-            [class.selected]="seleccion().includes(numero.valor)"
-            [disabled]="rifa.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || !!compra()"
-            (click)="toggle(numero)"
-          >
-            <strong>
-              {{ numero.numerosIncluidos.length > 1 ? numero.numerosIncluidos.join('-') : numero.etiqueta }}
-            </strong>
-          </button>
+          <div class="public-number-option">
+            <button
+              type="button"
+              class="number-cell grouped-cell"
+              [class.available]="numero.estado === 'DISPONIBLE'"
+              [class.pending]="numero.estado === 'PENDIENTE'"
+              [class.sold]="numero.estado === 'VENDIDO'"
+              [class.selected]="seleccion().includes(numero.valor)"
+              [attr.aria-disabled]="rifa.estado !== 'PUBLICADA' || numero.estado !== 'DISPONIBLE' || !!compra() || enviando()"
+              [attr.aria-describedby]="numero.estado !== 'DISPONIBLE' && numero.compradorNombre ? 'comprador-' + numero.id : null"
+              (click)="toggle(numero)"
+            >
+              <strong>
+                {{ numero.numerosIncluidos.length > 1 ? numero.numerosIncluidos.join('-') : numero.etiqueta }}
+              </strong>
+            </button>
+            @if (numero.estado !== 'DISPONIBLE' && numero.compradorNombre) {
+              <span class="public-buyer-tooltip" role="tooltip" [id]="'comprador-' + numero.id">
+                {{ numero.compradorNombre }}
+              </span>
+            }
+          </div>
         }
       </div>
 
@@ -258,7 +266,7 @@
               <input
       type="file"
       accept="image/jpeg,image/png,image/webp,application/pdf"
-      [disabled]="subiendoComprobante() || compraConComprobante()"
+      [disabled]="subiendoComprobante() || marcandoWhatsapp() || compraConComprobante()"
                 (change)="cargarComprobante($event)"
               />
             </label>
@@ -270,7 +278,7 @@
             <button
               class="ghost-action full-width"
               type="button"
-              [disabled]="marcandoWhatsapp() || compraConComprobante()"
+              [disabled]="marcandoWhatsapp() || subiendoComprobante() || compraConComprobante()"
               (click)="marcarComprobanteWhatsapp()"
             >
               {{ compra.comprobanteWhatsapp ? 'Comprobante informado por WhatsApp' : (marcandoWhatsapp() ? 'Registrando...' : 'Ya envié el comprobante por WhatsApp') }}
@@ -418,3 +426,22 @@
     </section>
   </div>
 }
+
+<dialog #confirmacionCompra class="purchase-confirmation-dialog" aria-labelledby="confirmar-compra-titulo" (cancel)="enviando() && $event.preventDefault()">
+  <h2 id="confirmar-compra-titulo">Confirmá tu compra</h2>
+  <p>Revisá tus datos antes de reservar los números.</p>
+  <dl class="purchase-details">
+    <div><dt>Nombre</dt><dd>{{ form.controls.nombre.value }}</dd></div>
+    <div><dt>Teléfono / WhatsApp</dt><dd>{{ form.controls.telefono.value }}</dd></div>
+    <div><dt>Números</dt><dd>{{ seleccionEtiquetas() }}</dd></div>
+    <div><dt>Total</dt><dd>{{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</dd></div>
+  </dl>
+  <p>Al confirmar, reservaremos tus números y te mostraremos cómo pagar y enviar el comprobante.</p>
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  }
+  <div class="purchase-confirmation-actions">
+    <button type="button" class="ghost-action" autofocus [disabled]="enviando()" (click)="cerrarConfirmacionCompra()">Volver y editar</button>
+    <button type="button" class="primary-action" [disabled]="enviando()" (click)="registrarCompra()">{{ enviando() ? 'Confirmando...' : 'Sí, confirmar compra' }}</button>
+  </div>
+</dialog>
